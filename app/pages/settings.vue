@@ -2,9 +2,9 @@
   <div>
     <div class="mb-6">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-        {{ $t('settings') || 'Settings' }}
+        {{ $t('settings') || 'การตั้งค่า' }}
       </h1>
-      <p class="text-gray-500 dark:text-gray-400">Manage your account preferences and profile.</p>
+      <p class="text-gray-500 dark:text-gray-400">จัดการการตั้งค่าบัญชีและโปรไฟล์ของคุณ</p>
     </div>
 
     <div v-if="loading" class="flex justify-center p-8">
@@ -16,7 +16,7 @@
         <!-- Account Info -->
         <section>
           <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-            Account Information
+            ข้อมูลบัญชี
           </h2>
           <div class="flex items-center space-x-4">
             <div
@@ -25,7 +25,7 @@
               {{ auth.user.value?.email?.charAt(0).toUpperCase() }}
             </div>
             <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Email Address</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">อีเมล</p>
               <p class="font-medium text-gray-900 dark:text-white">{{ auth.user.value?.email }}</p>
             </div>
           </div>
@@ -35,12 +35,12 @@
 
         <!-- Preferences -->
         <section>
-          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Preferences</h2>
+          <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">การตั้งค่าทั่วไป</h2>
           <div class="space-y-6 max-w-md">
             <!-- Language -->
             <div class="flex flex-col space-y-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Display Language</label
+                >ภาษาที่แสดง</label
               >
               <Dropdown
                 v-model="selectedLanguage"
@@ -55,7 +55,7 @@
             <!-- Theme -->
             <div class="flex flex-col space-y-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Interface Theme</label
+                >ธีมของระบบ</label
               >
               <Dropdown
                 v-model="selectedTheme"
@@ -70,7 +70,7 @@
             <!-- Currency -->
             <div class="flex flex-col space-y-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                >Default Currency</label
+                >สกุลเงินหลัก</label
               >
               <Dropdown
                 v-model="selectedCurrency"
@@ -102,8 +102,8 @@ const languages = [
 ]
 
 const themes = [
-  { label: 'Light', value: 'light' },
-  { label: 'Dark', value: 'dark' }
+  { label: 'สว่าง (Light)', value: 'light' },
+  { label: 'มืด (Dark)', value: 'dark' }
 ]
 
 const currencies = [

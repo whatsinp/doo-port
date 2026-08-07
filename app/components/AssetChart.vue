@@ -41,6 +41,29 @@ watch(() => props.data, () => {
   updateChartData()
 }, { deep: true })
 
+watch(() => props.color, (newColor) => {
+  if (areaSeries && chart) {
+    const chartColor = newColor || '#3b82f6'
+    areaSeries.applyOptions({
+      lineColor: chartColor,
+      topColor: `${chartColor}40`,
+      bottomColor: `${chartColor}00`,
+    })
+    chart.applyOptions({
+      crosshair: {
+        vertLine: {
+          color: chartColor,
+          labelBackgroundColor: chartColor,
+        },
+        horzLine: {
+          color: chartColor,
+          labelBackgroundColor: chartColor,
+        }
+      }
+    })
+  }
+})
+
 onMounted(() => {
   if (!chartContainer.value) return
 
@@ -81,15 +104,8 @@ onMounted(() => {
         labelBackgroundColor: chartColor,
       },
     },
-    handleScroll: {
-      mouseWheel: false,
-      pressedMouseMove: true,
-    },
-    handleScale: {
-      axisPressedMouseMove: true,
-      mouseWheel: false,
-      pinch: true,
-    },
+    handleScroll: false,
+    handleScale: false,
   })
 
   areaSeries = chart.addSeries(AreaSeries, {

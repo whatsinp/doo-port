@@ -5,16 +5,16 @@
     <div class="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-          Reset Password
+          รีเซ็ตรหัสผ่าน
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-          Enter your email to receive a password reset link.
+          กรอกอีเมลของคุณเพื่อรับลิงก์สำหรับรีเซ็ตรหัสผ่าน
         </p>
       </div>
       <form class="mt-8 space-y-6" @submit.prevent="handleReset">
         <div class="rounded-md shadow-sm space-y-4">
           <div>
-            <label for="email-address" class="sr-only">Email address</label>
+            <label for="email-address" class="sr-only">อีเมล</label>
             <InputText
               id="email-address"
               v-model="email"
@@ -23,7 +23,7 @@
               autocomplete="email"
               required
               class="w-full"
-              placeholder="Email address"
+              placeholder="อีเมล"
             />
           </div>
         </div>
@@ -32,7 +32,7 @@
         <Message v-if="successMsg" severity="success" :closable="false">{{ successMsg }}</Message>
 
         <div>
-          <Button type="submit" :loading="loading" label="Send Reset Link" class="w-full" />
+          <Button type="submit" :loading="loading" label="ส่งลิงก์รีเซ็ตรหัสผ่าน" class="w-full" />
         </div>
 
         <div class="mt-4 text-center">
@@ -40,7 +40,7 @@
             href="/login"
             class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
           >
-            Back to login
+            กลับไปหน้าเข้าสู่ระบบ
           </NuxtLink>
         </div>
       </form>
@@ -67,9 +67,9 @@ const handleReset = async () => {
   successMsg.value = ''
   try {
     await auth.resetPassword(email.value)
-    successMsg.value = 'Password reset email sent! Please check your inbox.'
+    successMsg.value = 'ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว! กรุณาตรวจสอบกล่องจดหมายของคุณ'
   } catch (error: any) {
-    errorMsg.value = error.message || 'Failed to send reset email'
+    errorMsg.value = error.message || 'ไม่สามารถส่งอีเมลรีเซ็ตรหัสผ่านได้'
   } finally {
     loading.value = false
   }

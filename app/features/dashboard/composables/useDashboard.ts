@@ -1,4 +1,4 @@
-import { ref, watchEffect, computed } from 'vue'
+import { ref, watchEffect, computed, watch } from 'vue'
 import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import { useNuxtApp } from '#app'
 import { useAuth } from '~/features/auth/composables/useAuth'
@@ -39,11 +39,73 @@ export const useDashboard = () => {
   const totalCostBasis = computed(() => {
     let total = new Decimal(0)
     for (const h of allHoldings.value) {
-      // Assuming all holdings are in the same currency for MVP simplicity
-      total = total.plus(new Decimal(h.costBasis || 0))
+      if (parseFloat(h.quantity) > 0) {
+        total = total.plus(new Decimal(h.costBasis || 0))
+      }
     }
     return total.toNumber()
   })
 
-  return { allHoldings, loading, totalCostBasis }
+  const aggregatedHoldings = computed(() => {
+    const map = new Map<string, { symbol: string, quantity: number, costBasis: number }>()
+    for (const h of allHoldings.value) {
+      const qty = parseFloat(h.quantity)
+      if (qty <= 0) continue
+      const existing = map.get(h.assetSymbol)
+      if (existing) {
+        existing.quantity += qty
+        existing.costBasis += parseFloat(h.costBasis)
+      } else {
+        map.set(h.assetSymbol, {
+          symbol: h.assetSymbol,
+          quantity: qty,
+          costBasis: parseFloat(h.costBasis)
+        })
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.costBasis - a.costBasis)
+  })
+
+  const currentPrices = ref<Record<string, number>>({})
+  const loadingPrices = ref(false)
+
+  watch(aggregatedHoldings, async (newHoldings) => {
+    if (newHoldings.length === 0) {
+      currentPrices.value = {}
+      return
+    }
+    loadingPrices.value = true
+    try {
+      const promises = newHoldings.map(async (h) => {
+        try {
+          const res = await $fetch<{ data: { price: string } }>(
+            `http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/quotes/${h.symbol}`
+          )
+          return { symbol: h.symbol, price: parseFloat(res.data.price) }
+        } catch {
+          return { symbol: h.symbol, price: 0 }
+        }
+      })
+      const results = await Promise.all(promises)
+      const prices: Record<string, number> = {}
+      for (const r of results) {
+        if (r.price > 0) prices[r.symbol] = r.price
+      }
+      currentPrices.value = prices
+    } finally {
+      loadingPrices.value = false
+    }
+  }, { deep: true })
+
+  const currentTotalValue = computed(() => {
+    if (Object.keys(currentPrices.value).length === 0) return 0
+    let total = 0
+    for (const h of aggregatedHoldings.value) {
+      const price = currentPrices.value[h.symbol] || (h.quantity > 0 ? h.costBasis / h.quantity : 0) // fallback to average cost if API fails
+      total += h.quantity * price
+    }
+    return total
+  })
+
+  return { allHoldings, loading, totalCostBasis, aggregatedHoldings, currentPrices, loadingPrices, currentTotalValue }
 }

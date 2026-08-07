@@ -1,5 +1,5 @@
-import { ref } from 'vue'
-import { useStorage } from '@vueuse/core'
+import { ref, computed } from 'vue'
+import { useFavorites } from '~/features/favorites/composables/useFavorites'
 
 export interface MarketSearchResult {
   symbol: string
@@ -43,20 +43,27 @@ export const useMarket = () => {
   const loadingDetails = ref(false)
 
   // Favorites state
-  const favorites = useStorage<string[]>('doo-port-favorites', ['AAPL', 'MSFT', 'NVDA'])
+  const { favorites: dbFavorites, toggleFavorite: dbToggleFavorite } = useFavorites()
+  const favorites = computed(() => dbFavorites.value.map(f => f.symbol))
   const favoritesData = ref<FavoriteAssetData[]>([])
   const loadingFavorites = ref(false)
 
-  const toggleFavorite = (symbol: string) => {
-    const idx = favorites.value.indexOf(symbol)
-    if (idx >= 0) {
-      favorites.value.splice(idx, 1)
-      favoritesData.value = favoritesData.value.filter(f => f.symbol !== symbol)
-    } else {
-      favorites.value.push(symbol)
-      // When added, we might want to fetch its data if we are looking at the favorites list,
-      // but usually the user is looking at search results when they toggle.
+  const toggleFavorite = async (symbol: string) => {
+    // Attempt to find name from search results or selected asset
+    let name = symbol
+    const foundInResults = results.value.find(r => r.symbol === symbol)
+    if (foundInResults) {
+      name = foundInResults.name
+    } else if (selectedAsset.value && selectedAsset.value.symbol === symbol) {
+      name = selectedAsset.value.name
     }
+
+    // Optimistically update local data array if removing
+    if (favorites.value.includes(symbol)) {
+      favoritesData.value = favoritesData.value.filter(f => f.symbol !== symbol)
+    }
+
+    await dbToggleFavorite(symbol, name)
   }
 
   const isFavorite = (symbol: string) => favorites.value.includes(symbol)
@@ -114,7 +121,7 @@ export const useMarket = () => {
     }
   }
 
-  const fetchAssetDetails = async (symbol: string, timeframe: string = '1M') => {
+  const fetchAssetDetails = async (symbol: string, timeframe: string = '1D') => {
     loadingDetails.value = true
     try {
       const [quoteRes, histRes] = await Promise.all([

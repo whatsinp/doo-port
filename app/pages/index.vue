@@ -1,5 +1,5 @@
 <template>
-  <div>Redirecting...</div>
+  <div>กำลังเปลี่ยนหน้า...</div>
 </template>
 
 <script setup lang="ts">

@@ -17,6 +17,7 @@ export interface Portfolio {
   id: string
   userId: string
   name: string
+  description?: string
   createdAt: any
 }
 
@@ -51,7 +52,7 @@ export const usePortfolios = () => {
     })
   }
 
-  const createPortfolio = async (name: string) => {
+  const createPortfolio = async (name: string, description: string = '') => {
     const user = auth.user.value
     if (!user) throw new Error('Not logged in')
 
@@ -60,9 +61,15 @@ export const usePortfolios = () => {
     await setDoc(docRef, {
       userId: user.uid,
       name,
+      description,
       createdAt: serverTimestamp()
     })
     return id
+  }
+
+  const updatePortfolio = async (id: string, name: string, description: string) => {
+    const docRef = doc($db as any, 'portfolios', id)
+    await setDoc(docRef, { name, description }, { merge: true })
   }
 
   const deletePortfolio = async (id: string) => {
@@ -70,5 +77,5 @@ export const usePortfolios = () => {
     await deleteDoc(docRef)
   }
 
-  return { portfolios, loading, createPortfolio, deletePortfolio }
+  return { portfolios, loading, createPortfolio, updatePortfolio, deletePortfolio }
 }

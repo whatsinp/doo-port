@@ -24,22 +24,59 @@ class MockMarketProvider {
         { symbol: 'NFLX', name: 'Netflix Inc.', currency: 'USD', exchange: 'NASDAQ', type: 'Stock' },
         { symbol: 'DIS', name: 'The Walt Disney Company', currency: 'USD', exchange: 'NYSE', type: 'Stock' }
     ];
-    async getQuote(symbol) {
-        const asset = this.mockDb.find(a => a.symbol === symbol.toUpperCase());
+    masterHistory = {};
+    getOrCreateMaster(symbol) {
+        if (this.masterHistory[symbol])
+            return this.masterHistory[symbol];
+        const points = 4320; // 180 days * 24 hours
         const basePrice = 100 + symbol.length * 20;
-        // Generate some random fluctuation
-        const changePercent = (Math.random() * 4 - 2).toFixed(2); // -2% to 2%
-        const currentPrice = basePrice * (1 + parseFloat(changePercent) / 100);
-        const dayLow = currentPrice * 0.98;
-        const dayHigh = currentPrice * 1.02;
+        let currentPrice = basePrice;
+        const now = new Date();
+        // Align to current hour for neat timestamps
+        now.setMinutes(0, 0, 0);
+        // Deterministic seed based on symbol and current date
+        let seed = now.getDate() + now.getMonth() * 31 + now.getFullYear() * 365;
+        for (let i = 0; i < symbol.length; i++)
+            seed += symbol.charCodeAt(i);
+        const random = () => {
+            const x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        };
+        const data = [];
+        // Generate forward from 180 days ago
+        for (let i = points; i >= 0; i--) {
+            currentPrice = currentPrice * (1 + (random() * 0.02 - 0.01));
+            const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+            data.push({
+                time: Math.floor(time.getTime() / 1000),
+                value: parseFloat(currentPrice.toFixed(2))
+            });
+        }
+        this.masterHistory[symbol] = data;
+        return data;
+    }
+    async getQuote(symbol) {
+        const sym = symbol.toUpperCase();
+        const master = this.getOrCreateMaster(sym);
+        const asset = this.mockDb.find(a => a.symbol === sym);
+        const currentPoint = master[master.length - 1];
+        const currentPrice = currentPoint.value;
+        // Day open is 24 hours ago (or 24 points ago)
+        const openPoint = master[master.length - 25] || master[0];
+        const openPrice = openPoint.value;
+        const changePercent = ((currentPrice - openPrice) / openPrice * 100).toFixed(2);
+        // Day low/high would be from the last 24 points
+        const last24 = master.slice(-24);
+        const dayLow = Math.min(...last24.map(p => p.value)).toFixed(2);
+        const dayHigh = Math.max(...last24.map(p => p.value)).toFixed(2);
         return {
-            symbol: symbol.toUpperCase(),
-            name: asset?.name || symbol.toUpperCase(),
+            symbol: sym,
+            name: asset?.name || sym,
             price: currentPrice.toFixed(2),
             currency: 'USD',
             changePercent: parseFloat(changePercent),
-            dayLow: dayLow.toFixed(2),
-            dayHigh: dayHigh.toFixed(2),
+            dayLow,
+            dayHigh,
             asOf: new Date().toISOString()
         };
     }
@@ -52,39 +89,31 @@ class MockMarketProvider {
             a.name.toLowerCase().includes(query.toLowerCase()));
     }
     async getHistoricalData(symbol, timeframe) {
-        const data = [];
-        let dataPoints = 30;
-        let intervalHours = 24;
-        switch (timeframe) {
-            case '1D':
-                dataPoints = 24;
-                intervalHours = 1;
-                break;
-            case '5D':
-                dataPoints = 60;
-                intervalHours = 2;
-                break;
-            case '1M':
-                dataPoints = 30;
-                intervalHours = 24;
-                break;
-            case '6M':
-                dataPoints = 180;
-                intervalHours = 24;
-                break;
+        const sym = symbol.toUpperCase();
+        const master = this.getOrCreateMaster(sym);
+        let result = [];
+        if (timeframe === '1D') {
+            result = master.slice(-24);
         }
-        let currentPrice = 100 + symbol.length * 20;
-        const now = new Date();
-        for (let i = dataPoints; i >= 0; i--) {
-            const time = new Date(now.getTime() - i * intervalHours * 60 * 60 * 1000);
-            // Random walk
-            currentPrice = currentPrice * (1 + (Math.random() * 0.02 - 0.01));
-            data.push({
-                time: Math.floor(time.getTime() / 1000), // Unix timestamp for lightweight-charts
-                value: parseFloat(currentPrice.toFixed(2))
-            });
+        else if (timeframe === '5D') {
+            const slice = master.slice(-120);
+            result = slice.filter((_, i) => i % 2 === 0);
         }
-        return data;
+        else if (timeframe === '1M') {
+            const slice = master.slice(-720);
+            result = slice.filter((_, i) => i % 24 === 0);
+        }
+        else if (timeframe === '6M') {
+            result = master.filter((_, i) => i % 24 === 0);
+        }
+        else {
+            result = master.slice(-24);
+        }
+        // Ensure the very last point is always exactly matching current price
+        if (result.length > 0 && result[result.length - 1].time !== master[master.length - 1].time) {
+            result.push(master[master.length - 1]);
+        }
+        return result;
     }
 }
 exports.MockMarketProvider = MockMarketProvider;

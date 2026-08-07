@@ -12,32 +12,32 @@
               <NuxtLink
                 href="/dashboard"
                 class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >Dashboard</NuxtLink
+                >แผงควบคุม</NuxtLink
               >
               <NuxtLink
                 href="/portfolio"
                 class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >Portfolios</NuxtLink
+                >พอร์ตการลงทุน</NuxtLink
               >
               <NuxtLink
                 href="/market"
                 class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >Market</NuxtLink
+                >ตลาด</NuxtLink
               >
               <NuxtLink
                 href="/favorites"
                 class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >Watchlist</NuxtLink
+                >รายการที่น่าสนใจ</NuxtLink
               >
               <NuxtLink
                 href="/settings"
                 class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >Settings</NuxtLink
+                >การตั้งค่า</NuxtLink
               >
               <NuxtLink
                 href="/admin"
                 class="border-transparent text-red-500 dark:text-red-400 hover:border-red-600 hover:text-red-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold"
-                >Admin</NuxtLink
+                >ผู้ดูแลระบบ</NuxtLink
               >
             </div>
           </div>
@@ -58,7 +58,10 @@
             <span v-if="auth.user.value" class="text-sm text-gray-700 dark:text-gray-300">{{
               auth.user.value.email
             }}</span>
-            <Button icon="pi pi-sign-out" text rounded aria-label="Logout" @click="handleLogout" />
+            <button @click="handleLogout" class="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg">
+              <i class="pi pi-sign-out"></i>
+              <span>ออกจากระบบ</span>
+            </button>
           </div>
         </div>
       </div>
