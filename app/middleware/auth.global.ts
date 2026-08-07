@@ -14,13 +14,13 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     })
   })
 
-  const publicRoutes = ['/login', '/register', '/forgot-password', '/']
+  const publicRoutes = ['/login', '/register', '/auth', '/forgot-password', '/']
 
   if (!user && !publicRoutes.includes(to.path)) {
-    return navigateTo('/login')
+    return navigateTo('/auth?mode=login')
   }
 
-  if (user && (to.path === '/login' || to.path === '/register')) {
+  if (user && (to.path === '/login' || to.path === '/register' || to.path === '/auth')) {
     return navigateTo('/dashboard')
   }
 })
