@@ -1,0 +1,11 @@
+{
+  "app": {
+    "name": "Investment Portfolio Tracker"
+  },
+  "common": {
+    "loading": "Loading...",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save"
+  }
+}
