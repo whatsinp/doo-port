@@ -48,7 +48,6 @@
           </div>
         </div>
 
-        <Message v-if="errorMsg" severity="error" :closable="false">{{ errorMsg }}</Message>
 
         <div>
           <Button type="submit" :loading="loading" label="Sign in" class="w-full" />
@@ -72,24 +71,29 @@
 import { ref } from 'vue'
 import { useAuth } from '~/features/auth/composables/useAuth'
 import { useRouter } from '#app'
+import { useToast } from '~/composables/useToast'
 
 definePageMeta({ layout: 'auth' })
 
 const email = ref('')
 const password = ref('')
-const errorMsg = ref('')
 const loading = ref(false)
 const auth = useAuth()
 const router = useRouter()
+const toast = useToast()
 
 const handleLogin = async () => {
   loading.value = true
-  errorMsg.value = ''
   try {
     await auth.loginWithEmail(email.value, password.value)
+    toast.success('You have successfully logged in.', 'Welcome back!')
     router.push('/dashboard')
   } catch (error: any) {
-    errorMsg.value = error.message || 'Failed to login'
+    // Check for Firebase invalid credential or not found errors
+    const errorMsg = error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found'
+      ? 'Invalid email or password.'
+      : error.message || 'Failed to login'
+    toast.error(errorMsg, 'Login Failed')
   } finally {
     loading.value = false
   }

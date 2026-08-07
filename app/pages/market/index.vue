@@ -1,73 +1,322 @@
 <template>
-  <div>
+  <div class="max-w-7xl mx-auto">
     <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Market Search</h1>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Market</h1>
       <p class="text-gray-500 dark:text-gray-400">
-        Search for stocks, crypto, and other assets to view their live data.
+        Discover and analyze stocks, crypto, and other assets.
       </p>
     </div>
 
-    <!-- Search Box -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
-      <form @submit.prevent="handleSearch" class="flex gap-4">
-        <div class="relative flex-1">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-          <InputText
-            v-model="searchQuery"
-            placeholder="Search by symbol or name (e.g., AAPL, Apple)"
-            class="w-full pl-10"
-          />
+    <!-- Layout: Grid for List (Left) and Details (Right) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Column: Search & List -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        
+        <!-- Search Box -->
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700/50 p-4">
+          <form @submit.prevent="handleSearch" class="flex flex-col gap-3">
+            <div class="relative flex items-center">
+              <i class="pi pi-search absolute left-4 text-gray-400 z-10"></i>
+              <input
+                type="text"
+                v-model="searchQuery"
+                placeholder="Search symbol or name..."
+                class="w-full pl-11 pr-10 py-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                @input="handleInput"
+              />
+              <button 
+                v-if="searchQuery" 
+                type="button"
+                class="absolute right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                @click="clearSearch"
+              >
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+          </form>
+          <Message v-if="errorMsg" severity="error" class="mt-3">{{ errorMsg }}</Message>
         </div>
-        <Button type="submit" label="Search" :loading="loading" />
-      </form>
-      <Message v-if="errorMsg" severity="error" class="mt-4">{{ errorMsg }}</Message>
-    </div>
 
-    <!-- Results -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
-      <DataTable :value="results" :loading="loading" responsiveLayout="scroll">
-        <template #empty>
-          <div class="p-12 text-center text-gray-500 dark:text-gray-400">
-            <i class="pi pi-chart-bar text-5xl mb-4 text-gray-300 dark:text-gray-600"></i>
-            <p v-if="searchQuery && !loading">No assets found matching '{{ searchQuery }}'</p>
-            <p v-else>Enter a search query to discover assets.</p>
+        <!-- Search Results / Favorites List -->
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden flex-1 flex flex-col shadow-xl max-h-[567px]">
+          <div class="p-4 border-b border-gray-100 dark:border-gray-700/50 flex justify-between items-center bg-gray-50/30 dark:bg-gray-900/20 shrink-0">
+            <h3 class="font-bold text-gray-900 dark:text-white">
+              {{ searchQuery ? 'Search Results' : 'Favorites (หุ้นที่ชอบ)' }}
+            </h3>
           </div>
-        </template>
+          
+          <div class="flex-1 overflow-auto">
+            <div v-if="loading || loadingFavorites" class="p-8 flex justify-center">
+              <i class="pi pi-spinner pi-spin text-3xl text-blue-500"></i>
+            </div>
+            
+            <!-- Empty State for Favorites -->
+            <div v-else-if="!searchQuery && favoritesData.length === 0" class="p-12 text-center text-gray-500 dark:text-gray-400">
+              <i class="pi pi-star text-4xl mb-3 text-gray-300 dark:text-gray-600"></i>
+              <p>You haven't added any favorites yet.</p>
+              <p class="text-sm mt-2">Search for assets and click the star to save them here.</p>
+            </div>
 
-        <Column
-          field="symbol"
-          header="Symbol"
-          class="font-bold text-blue-600 dark:text-blue-400 w-1/4"
-        ></Column>
-        <Column field="name" header="Name" class="w-1/3"></Column>
-        <Column field="type" header="Type">
-          <template #body="{ data }">
-            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-xs font-medium">{{
-              data.type
-            }}</span>
-          </template>
-        </Column>
-        <Column field="exchange" header="Exchange"></Column>
-        <Column field="currency" header="Currency"></Column>
+            <!-- Empty State for Search -->
+            <div v-else-if="searchQuery && results.length === 0" class="p-12 text-center text-gray-500 dark:text-gray-400">
+              <i class="pi pi-search text-4xl mb-3 text-gray-300 dark:text-gray-600"></i>
+              <p>No assets found</p>
+            </div>
 
-        <Column>
-          <template #body="{ data }">
-            <Button icon="pi pi-eye" text rounded aria-label="View Details" />
-          </template>
-        </Column>
-      </DataTable>
+            <!-- List View -->
+            <div v-else class="flex flex-col">
+              
+              <!-- Search Results Mode -->
+              <template v-if="searchQuery">
+                <div 
+                  v-for="asset in results" 
+                  :key="asset.symbol"
+                  class="px-4 py-3 border-b border-gray-50 dark:border-gray-700/30 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-between"
+                  :class="selectedAsset?.symbol === asset.symbol ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'"
+                >
+                  <div class="flex-1 cursor-pointer" @click="onRowClick(asset.symbol)">
+                    <div class="font-bold text-gray-900 dark:text-white">{{ asset.symbol }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{{ asset.name }}</div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-[10px] font-semibold uppercase">
+                      {{ asset.type }}
+                    </span>
+                    <button @click.stop="toggleFavorite(asset.symbol)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                      <i class="pi text-lg transition-colors" :class="isFavorite(asset.symbol) ? 'pi-star-fill text-yellow-400' : 'pi-star text-gray-300 dark:text-gray-600'"></i>
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Favorites Mode -->
+              <template v-else>
+                <div 
+                  v-for="asset in favoritesData" 
+                  :key="asset.symbol"
+                  class="px-4 py-3 border-b border-gray-50 dark:border-gray-700/30 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-between gap-4"
+                  :class="selectedAsset?.symbol === asset.symbol ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'"
+                >
+                  <!-- Symbol & Name -->
+                  <div class="w-1/3 cursor-pointer" @click="onRowClick(asset.symbol)">
+                    <div class="font-bold text-gray-900 dark:text-white">{{ asset.symbol }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{{ asset.name }}</div>
+                  </div>
+                  
+                  <!-- Sparkline Chart -->
+                  <div class="w-1/3 h-10 cursor-pointer" @click="onRowClick(asset.symbol)">
+                    <SparklineChart 
+                      v-if="asset.history && asset.history.length > 0" 
+                      :data="asset.history" 
+                      :color="asset.quote.changePercent >= 0 ? '#10b981' : '#f43f5e'" 
+                    />
+                  </div>
+
+                  <!-- Price & Action -->
+                  <div class="w-1/3 flex items-center justify-end gap-3">
+                    <div class="flex flex-col items-end cursor-pointer" @click="onRowClick(asset.symbol)">
+                      <div class="font-bold text-gray-900 dark:text-white text-sm">${{ asset.quote.price }}</div>
+                      <div class="text-xs font-semibold" :class="asset.quote.changePercent >= 0 ? 'text-emerald-500' : 'text-rose-500'">
+                        {{ asset.quote.changePercent >= 0 ? '+' : '' }}{{ asset.quote.changePercent }}%
+                      </div>
+                    </div>
+                    <button @click.stop="toggleFavoriteAndRefresh(asset.symbol)" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors shrink-0">
+                      <i class="pi text-lg transition-colors" :class="isFavorite(asset.symbol) ? 'pi-star-fill text-yellow-400' : 'pi-star text-gray-300 dark:text-gray-600'"></i>
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Asset Detail Pane -->
+      <div class="lg:col-span-7">
+        <div v-if="!selectedAsset" class="h-full min-h-[400px] bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+          <i class="pi pi-chart-line text-6xl mb-4 opacity-50"></i>
+          <p class="text-lg">Select an asset from the list to view details</p>
+        </div>
+
+        <Transition
+          enter-active-class="transition duration-500 ease-out"
+          enter-from-class="opacity-0 translate-y-8"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition duration-300 ease-in absolute w-full"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 translate-y-8"
+        >
+          <div v-if="selectedAsset" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
+            
+            <!-- Header & Price Info -->
+            <div class="p-6 lg:p-8 border-b border-gray-100 dark:border-gray-700/50 bg-gradient-to-r from-transparent to-gray-50/50 dark:to-gray-900/20">
+              <div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                
+                <!-- Left: Name and Price -->
+                <div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-sm"
+                      :class="selectedAsset.type === 'Crypto' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'"
+                    >
+                      {{ selectedAsset.symbol.substring(0, 1) }}
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-3">
+                        <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">{{ selectedAsset.symbol }}</h2>
+                        <button @click.stop="toggleFavoriteAndRefresh(selectedAsset.symbol)" class="p-2 -ml-2 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-full transition-colors">
+                          <i class="pi text-2xl transition-colors" :class="isFavorite(selectedAsset.symbol) ? 'pi-star-fill text-yellow-400 drop-shadow-sm' : 'pi-star text-gray-300 dark:text-gray-600'"></i>
+                        </button>
+                      </div>
+                      <p class="text-gray-500 dark:text-gray-400 font-medium">{{ selectedAsset.name }}</p>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 flex items-baseline gap-3">
+                    <span class="text-4xl font-bold text-gray-900 dark:text-white">
+                      ${{ selectedAsset.price }}
+                    </span>
+                    <span class="text-lg text-gray-500 dark:text-gray-400 font-medium">
+                      ≈ ฿{{ (parseFloat(selectedAsset.price) * 35).toFixed(2) }}
+                    </span>
+                  </div>
+                  
+                  <div class="mt-2 flex items-center gap-2">
+                    <div class="flex items-center gap-1 font-bold px-3 py-1 rounded-full text-sm"
+                      :class="selectedAsset.changePercent >= 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'"
+                    >
+                      <i :class="selectedAsset.changePercent >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+                      {{ Math.abs(selectedAsset.changePercent) }}% Today
+                    </div>
+                    <span class="text-xs text-gray-400">
+                      Last updated: {{ new Date(selectedAsset.asOf).toLocaleTimeString() }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Right: Meta stats -->
+                <div class="flex gap-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
+                  <div class="flex flex-col">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">Day High</span>
+                    <span class="font-bold text-gray-900 dark:text-white">${{ selectedAsset.dayHigh }}</span>
+                  </div>
+                  <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
+                  <div class="flex flex-col">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">Day Low</span>
+                    <span class="font-bold text-gray-900 dark:text-white">${{ selectedAsset.dayLow }}</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="p-6 lg:p-8">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Price History</h3>
+                <div class="flex gap-1 bg-gray-100 dark:bg-gray-900 p-1 rounded-lg">
+                  <button 
+                    v-for="tf in ['1D', '5D', '1M', '6M']" 
+                    :key="tf"
+                    @click="setTimeframe(tf)"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                    :class="activeTimeframe === tf ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                  >
+                    {{ tf }}
+                  </button>
+                </div>
+              </div>
+              
+              <AssetChart 
+                :data="historicalData" 
+                :loading="loadingDetails" 
+                :color="selectedAsset.changePercent >= 0 ? '#10b981' : '#f43f5e'" 
+              />
+            </div>
+
+          </div>
+        </Transition>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useMarket } from '~/features/market/composables/useMarket'
+import AssetChart from '~/components/AssetChart.vue'
+import SparklineChart from '~/components/SparklineChart.vue'
 
 const searchQuery = ref('')
-const { searchAssets, results, loading, errorMsg } = useMarket()
+const activeTimeframe = ref('1M')
+
+const { 
+  searchAssets, 
+  fetchAssetDetails,
+  results, 
+  loading, 
+  errorMsg,
+  selectedAsset,
+  historicalData,
+  loadingDetails,
+  favoritesData,
+  loadingFavorites,
+  toggleFavorite,
+  isFavorite,
+  fetchFavoritesData
+} = useMarket()
+
+// Load default trending assets on mount
+onMounted(async () => {
+  await fetchFavoritesData()
+  
+  // Auto-select the first favorite if none is selected
+  if (favoritesData.value.length > 0 && !selectedAsset.value) {
+    onRowClick(favoritesData.value[0].symbol)
+  }
+})
+
+let searchTimeout: any = null
+const handleInput = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    if (searchQuery.value) {
+      searchAssets(searchQuery.value)
+    }
+  }, 300)
+}
 
 const handleSearch = () => {
-  searchAssets(searchQuery.value)
+  clearTimeout(searchTimeout)
+  if (searchQuery.value) {
+    searchAssets(searchQuery.value)
+  }
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  // User cleared search, so we are back to favorites
+  fetchFavoritesData()
+}
+
+const toggleFavoriteAndRefresh = async (symbol: string) => {
+  toggleFavorite(symbol)
+  // Re-fetch favorites data if they remove it while looking at the list
+  if (!searchQuery.value) {
+    await fetchFavoritesData()
+  }
+}
+
+const onRowClick = async (symbol: string) => {
+  activeTimeframe.value = '1M' // Reset timeframe
+  await fetchAssetDetails(symbol, activeTimeframe.value)
+}
+
+const setTimeframe = async (tf: string) => {
+  if (!selectedAsset.value || activeTimeframe.value === tf) return
+  activeTimeframe.value = tf
+  await fetchAssetDetails(selectedAsset.value.symbol, tf)
 }
 </script>
