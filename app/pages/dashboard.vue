@@ -1,9 +1,12 @@
 <template>
   <div>
-    <div class="mb-6 flex justify-between items-center">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-        {{ $t('dashboard') || 'แผงควบคุม' }}
-      </h1>
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">แผงควบคุม</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">
+          สรุปภาพรวมและสถิติการลงทุนของคุณทั้งหมด
+        </p>
+      </div>
       <NuxtLink href="/portfolio">
         <Button label="จัดการพอร์ตการลงทุน" icon="pi pi-briefcase" />
       </NuxtLink>

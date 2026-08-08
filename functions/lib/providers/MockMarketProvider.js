@@ -22,7 +22,8 @@ class MockMarketProvider {
         { symbol: 'KBANK', name: 'Kasikornbank Public Company Limited', currency: 'THB', exchange: 'SET', type: 'Stock' },
         { symbol: 'SCB', name: 'SCB X Public Company Limited', currency: 'THB', exchange: 'SET', type: 'Stock' },
         { symbol: 'NFLX', name: 'Netflix Inc.', currency: 'USD', exchange: 'NASDAQ', type: 'Stock' },
-        { symbol: 'DIS', name: 'The Walt Disney Company', currency: 'USD', exchange: 'NYSE', type: 'Stock' }
+        { symbol: 'DIS', name: 'The Walt Disney Company', currency: 'USD', exchange: 'NYSE', type: 'Stock' },
+        { symbol: 'GOLD', name: 'Gold (XAU/USD)', currency: 'USD', exchange: 'COMMODITY', type: 'Commodity' }
     ];
     masterHistory = {};
     getOrCreateMaster(symbol) {

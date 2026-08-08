@@ -1,10 +1,15 @@
 <template>
   <div class="max-w-7xl mx-auto">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">ตลาด</h1>
-      <p class="text-gray-500 dark:text-gray-400">
-        ค้นพบและวิเคราะห์หุ้น, คริปโต, และสินทรัพย์อื่นๆ
-      </p>
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">ตลาด</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">
+          ค้นพบและวิเคราะห์หุ้น, คริปโต, และสินทรัพย์อื่นๆ
+        </p>
+      </div>
+      <NuxtLink href="/portfolio">
+        <Button label="จัดการพอร์ตการลงทุน" icon="pi pi-briefcase" />
+      </NuxtLink>
     </div>
 
     <!-- Layout: Grid for List (Left) and Details (Right) -->

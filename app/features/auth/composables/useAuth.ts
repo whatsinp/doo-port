@@ -5,7 +5,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword
 } from 'firebase/auth'
 import type { User } from 'firebase/auth'
 import { useNuxtApp } from '#app'
@@ -39,12 +42,25 @@ export const useAuth = () => {
     return await sendPasswordResetEmail($auth as ReturnType<typeof getAuth>, email)
   }
 
+  const reauthenticate = async (password: string) => {
+    if (!user.value || !user.value.email) throw new Error('User not logged in or email is missing')
+    const credential = EmailAuthProvider.credential(user.value.email, password)
+    await reauthenticateWithCredential(user.value, credential)
+  }
+
+  const changePassword = async (newPassword: string) => {
+    if (!user.value) throw new Error('User not logged in')
+    await updatePassword(user.value, newPassword)
+  }
+
   return {
     user,
     loading,
     loginWithEmail,
     registerWithEmail,
     logout,
-    resetPassword
+    resetPassword,
+    reauthenticate,
+    changePassword
   }
 }

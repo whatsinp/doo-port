@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+  <div class="fixed top-20 right-4 sm:top-auto sm:bottom-6 sm:right-6 z-[100] flex flex-col gap-3 w-[calc(100vw-2rem)] sm:w-full sm:max-w-sm pointer-events-none">
     <TransitionGroup
       enter-active-class="transition duration-400 ease-out"
       enter-from-class="translate-x-full opacity-0"

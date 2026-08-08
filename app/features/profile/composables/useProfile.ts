@@ -9,6 +9,7 @@ export interface UserProfile {
   theme: 'light' | 'dark'
   defaultCurrency: string
   avatarUrl?: string
+  bannerUrl?: string
   nickname?: string
 }
 
