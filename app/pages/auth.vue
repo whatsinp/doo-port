@@ -13,7 +13,7 @@
       class="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-emerald-400/30 rounded-full blur-3xl mix-blend-multiply opacity-50 animate-blob animation-delay-4000"
     ></div>
 
-    <div class="w-full max-w-md h-[600px] perspective-1000 z-10">
+    <div class="w-full max-w-md h-[720px] perspective-1000 z-10">
       <div
         class="w-full h-full relative transition-transform duration-700 ease-in-out preserve-3d"
         :class="{ 'rotate-y-180': isRegister }"
@@ -140,8 +140,55 @@
             <p class="text-gray-500 dark:text-gray-400 mt-2">เข้าร่วม Doo-Port เพื่อติดตามสินทรัพย์ของคุณ</p>
           </div>
 
-          <form class="space-y-6" @submit.prevent="handleRegister">
+          <form class="space-y-4" @submit.prevent="handleRegister">
             <div class="space-y-4">
+              <!-- Avatar Upload -->
+              <div class="flex justify-center mb-2">
+                <div class="relative group">
+                  <img
+                    v-if="registerAvatarPreview"
+                    :src="registerAvatarPreview"
+                    alt="Avatar"
+                    class="h-20 w-20 rounded-full object-cover border-2 border-emerald-200 dark:border-emerald-700/50 shadow-sm"
+                  />
+                  <div
+                    v-else
+                    class="h-20 w-20 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500 dark:text-emerald-400 border-2 border-dashed border-emerald-200 dark:border-emerald-700/50 group-hover:border-emerald-400 transition-colors shadow-sm"
+                  >
+                    <i class="pi pi-camera text-2xl"></i>
+                  </div>
+                  <label
+                    for="register-avatar"
+                    class="absolute inset-0 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity backdrop-blur-sm"
+                  >
+                    <i class="pi pi-upload text-xl"></i>
+                  </label>
+                  <input
+                    id="register-avatar"
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    @change="handleRegisterAvatar"
+                  />
+                </div>
+              </div>
+
+              <!-- Nickname Input -->
+              <div class="relative group">
+                <span
+                  class="absolute inset-y-0 left-0 flex items-center pl-4 z-20 pointer-events-none text-gray-400 group-focus-within:text-emerald-500 transition-colors"
+                >
+                  <i class="pi pi-id-card text-lg"></i>
+                </span>
+                <input
+                  v-model="registerNickname"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="ชื่อเล่น (ไม่บังคับ)"
+                  class="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                />
+              </div>
+
               <!-- Email Input -->
               <div class="relative group">
                 <span
@@ -231,8 +278,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuth } from '~/features/auth/composables/useAuth'
-import { useRouter, useRoute } from '#app'
+import { useRouter, useRoute, useNuxtApp } from '#app'
 import { useToast } from '~/composables/useToast'
+import { doc, setDoc } from 'firebase/firestore'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 definePageMeta({ layout: 'auth' })
 
@@ -240,6 +289,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuth()
 const toast = useToast()
+const { $db, $storage } = useNuxtApp() as any
 
 const isRegister = ref(false)
 
@@ -251,6 +301,9 @@ const loginLoading = ref(false)
 // Register State
 const registerEmail = ref('')
 const registerPassword = ref('')
+const registerNickname = ref('')
+const registerAvatarFile = ref<File | null>(null)
+const registerAvatarPreview = ref<string | null>(null)
 const registerLoading = ref(false)
 
 onMounted(() => {
@@ -266,6 +319,9 @@ const toggleMode = () => {
   loginPassword.value = ''
   registerEmail.value = ''
   registerPassword.value = ''
+  registerNickname.value = ''
+  registerAvatarFile.value = null
+  registerAvatarPreview.value = null
   // Update URL without reloading
   router.replace({ query: { mode: isRegister.value ? 'register' : 'login' } })
 }
@@ -287,6 +343,18 @@ const handleLogin = async () => {
   }
 }
 
+const handleRegisterAvatar = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) return
+  const file = target.files[0]
+  if (!file.type.startsWith('image/')) {
+    toast.error('กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น', 'Invalid File')
+    return
+  }
+  registerAvatarFile.value = file
+  registerAvatarPreview.value = URL.createObjectURL(file)
+}
+
 const handleRegister = async () => {
   if (registerPassword.value.length < 6) {
     toast.error('Password must be at least 6 characters', 'Invalid Password')
@@ -294,7 +362,30 @@ const handleRegister = async () => {
   }
   registerLoading.value = true
   try {
-    await auth.registerWithEmail(registerEmail.value, registerPassword.value)
+    const cred = await auth.registerWithEmail(registerEmail.value, registerPassword.value)
+    const user = cred.user
+
+    const profileUpdates: any = {
+      language: 'en',
+      theme: 'light',
+      defaultCurrency: 'USD'
+    }
+
+    if (registerNickname.value) {
+      profileUpdates.nickname = registerNickname.value
+    }
+
+    if (registerAvatarFile.value) {
+      const fileExt = registerAvatarFile.value.name.split('.').pop()
+      const fileName = `avatars/${user.uid}-${Date.now()}.${fileExt}`
+      const sRef = storageRef($storage, fileName)
+      await uploadBytes(sRef, registerAvatarFile.value)
+      profileUpdates.avatarUrl = await getDownloadURL(sRef)
+    }
+
+    const docRef = doc($db, 'users', user.uid)
+    await setDoc(docRef, profileUpdates, { merge: true })
+
     toast.success('Your account has been created successfully.', 'Welcome!')
     router.push('/dashboard')
   } catch (error: any) {
@@ -350,6 +441,7 @@ const handleRegister = async () => {
   right: 1.25rem !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
+  margin-top: 0 !important; /* Override PrimeVue's default negative margin */
   color: #9ca3af !important;
   cursor: pointer;
   z-index: 20;

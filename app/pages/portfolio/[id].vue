@@ -121,11 +121,8 @@
           </div>
 
           <div class="relative z-10 mt-auto">
-            <div class="text-3xl font-extrabold mb-1 drop-shadow-sm">
+            <div class="text-3xl font-extrabold mb-4 drop-shadow-sm">
               {{ formatCurrency(String(getAssetProfitLoss(holding).currentVal), holding.tradeCurrency) }}
-            </div>
-            <div class="text-sm opacity-90 mb-4 font-medium drop-shadow-sm">
-              ≈ ฿{{ (getAssetProfitLoss(holding).currentVal * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
             </div>
             
             <div class="inline-flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm font-bold shadow-inner" :class="getAssetProfitLoss(holding).pl >= 0 ? 'text-green-300' : 'text-rose-300'">
@@ -208,20 +205,17 @@
                         {{ (getAssetProfitLoss(selectedHoldingForDetails).quote?.changePercent || 0).toFixed(2) }}%
                       </div>
                     </div>
-                    <p class="text-sm text-gray-500 mt-1">≈ ฿{{ (getAssetProfitLoss(selectedHoldingForDetails).price * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
                   </div>
                 </div>
 
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                   <p class="text-sm text-gray-500 font-bold mb-1">ต้นทุนต่อหุ้น</p>
                   <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(selectedHoldingForDetails.averageCost, selectedHoldingForDetails.tradeCurrency) }}</p>
-                  <p class="text-sm text-gray-500 mt-0.5">≈ ฿{{ (parseFloat(selectedHoldingForDetails.averageCost || '0') * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
                 </div>
 
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                   <p class="text-sm text-gray-500 font-bold mb-1">ต้นทุนรวม</p>
                   <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(selectedHoldingForDetails.costBasis, selectedHoldingForDetails.tradeCurrency) }}</p>
-                  <p class="text-sm text-gray-500 mt-0.5">≈ ฿{{ (parseFloat(selectedHoldingForDetails.costBasis || '0') * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
                 </div>
               </div>
 
@@ -472,10 +466,10 @@ const onTransactionSuccess = () => {
   // Can add toast notification here later
 }
 
-const formatCurrency = (val: string, currency: string) => {
+const formatCurrency = (val: string, currency?: string) => {
   const num = parseFloat(val)
   if (isNaN(num)) return val
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
     num
   )
 }

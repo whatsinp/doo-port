@@ -35,37 +35,52 @@
     </div>
 
     <!-- Dummy Users Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
-      <DataTable :value="dummyUsers" responsiveLayout="scroll">
-        <Column field="uid" header="UID" class="text-xs text-gray-500"></Column>
-        <Column field="email" header="อีเมล" class="font-medium dark:text-white"></Column>
-        <Column field="status" header="สถานะ">
-          <template #body="{ data }">
-            <span
-              :class="
-                data.status === 'Active'
-                  ? 'text-green-500 bg-green-50 dark:bg-green-900/20'
-                  : 'text-red-500 bg-red-50 dark:bg-red-900/20'
-              "
-              class="px-2 py-1 rounded-full text-xs font-bold"
-            >
-              {{ data.status }}
-            </span>
-          </template>
-        </Column>
-        <Column header="การจัดการ">
-          <template #body="{ data }">
-            <Button
-              v-if="data.status === 'ใช้งานปกติ'"
-              label="ระงับ"
-              severity="danger"
-              size="small"
-              outlined
-            />
-            <Button v-else label="เปิดใช้งานอีกครั้ง" severity="success" size="small" outlined />
-          </template>
-        </Column>
-      </DataTable>
+    <!-- Dummy Users Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+              <th class="py-3 px-4 font-semibold text-sm text-gray-600 dark:text-gray-300">UID</th>
+              <th class="py-3 px-4 font-semibold text-sm text-gray-600 dark:text-gray-300">อีเมล</th>
+              <th class="py-3 px-4 font-semibold text-sm text-gray-600 dark:text-gray-300">สถานะ</th>
+              <th class="py-3 px-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in dummyUsers" :key="user.uid" class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/25 transition-colors">
+              <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-400 font-mono">{{ user.uid }}</td>
+              <td class="py-3 px-4 font-medium text-gray-900 dark:text-white">{{ user.email }}</td>
+              <td class="py-3 px-4">
+                <span
+                  :class="
+                    user.status === 'ใช้งานปกติ'
+                      ? 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800'
+                      : 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800'
+                  "
+                  class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                >
+                  {{ user.status }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right">
+                <button
+                  v-if="user.status === 'ใช้งานปกติ'"
+                  class="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-white border border-red-600 hover:bg-red-600 rounded-lg transition-colors"
+                >
+                  ระงับ
+                </button>
+                <button
+                  v-else
+                  class="px-3 py-1.5 text-xs font-medium text-green-600 hover:text-white border border-green-600 hover:bg-green-600 rounded-lg transition-colors"
+                >
+                  เปิดใช้งานอีกครั้ง
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>

@@ -161,8 +161,7 @@ const { aggregatedHoldings, loading, totalCostBasis, currentPrices, loadingPrice
 const { profile } = useProfile()
 
 const formatCurrency = (val: number) => {
-  const currency = profile.value?.defaultCurrency || 'USD'
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(val)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val)
 }
 
 const totalProfitLoss = computed(() => {

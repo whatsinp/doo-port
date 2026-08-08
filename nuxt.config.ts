@@ -1,10 +1,17 @@
+import Aura from '@primevue/themes/aura'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: false,
   srcDir: 'app/',
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  css: ['~/assets/css/main.css'],
+  app: {
+    head: {
+      title: 'Doo Port'
+    }
+  },
+  css: ['~/assets/css/main.css', 'primeicons/primeicons.css'],
   runtimeConfig: {
     public: {
       firebaseApiKey: '',
@@ -29,16 +36,19 @@ export default defineNuxtConfig({
   },
   primevue: {
     options: {
-      ripple: true
+      ripple: true,
+      theme: {
+        preset: Aura
+      }
+    },
+    components: {
+      include: '*'
     }
   },
   i18n: {
     defaultLocale: 'th',
     strategy: 'no_prefix',
-    langDir: 'locales',
-    locales: [
-      { code: 'en', language: 'en-US', file: 'en.json', name: 'English' },
-      { code: 'th', language: 'th-TH', file: 'th.json', name: 'ไทย' }
-    ]
+    locales: ['en', 'th'],
+    vueI18n: './i18n.config.ts'
   }
 })

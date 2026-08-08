@@ -55,9 +55,24 @@
               </span>
             </div>
 
-            <span v-if="auth.user.value" class="text-sm text-gray-700 dark:text-gray-300">{{
-              auth.user.value.email
-            }}</span>
+            <div class="flex items-center gap-2 mr-4">
+              <img
+                v-if="profile?.avatarUrl"
+                :src="profile.avatarUrl"
+                alt="Profile"
+                class="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+              />
+              <div
+                v-else
+                class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold"
+              >
+                {{ (profile?.nickname || auth.user.value?.email || '?').charAt(0).toUpperCase() }}
+              </div>
+              <span v-if="auth.user.value" class="text-sm font-medium text-gray-700 dark:text-gray-300">{{
+                profile?.nickname || auth.user.value.email
+              }}</span>
+            </div>
+
             <button @click="handleLogout" class="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg">
               <i class="pi pi-sign-out"></i>
               <span>ออกจากระบบ</span>
@@ -79,11 +94,12 @@
 <script setup lang="ts">
 import { useAuth } from '~/features/auth/composables/useAuth'
 import { useNotifications } from '~/features/notifications/composables/useNotifications'
+import { useProfile } from '~/features/profile/composables/useProfile'
 import { useRouter } from '#app'
-import 'primeicons/primeicons.css'
 
 const auth = useAuth()
 const { unreadCount } = useNotifications()
+const { profile } = useProfile()
 const router = useRouter()
 
 const handleLogout = async () => {

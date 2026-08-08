@@ -293,11 +293,11 @@ const confirmDelete = async (id: string) => {
 }
 
 // Portfolio Value Calculations
-const formatCurrency = (value: number | string, currency: string) => {
+const formatCurrency = (value: number | string, currency?: string) => {
   const num = typeof value === 'string' ? parseFloat(value) : value
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
+    currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(num || 0)
