@@ -14,7 +14,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     })
   })
 
-  const publicRoutes = ['/login', '/register', '/auth', '/forgot-password', '/']
+  const publicRoutes = ['/login', '/register', '/auth', '/forgot-password', '/reset-password', '/']
 
   if (!user && !publicRoutes.includes(to.path)) {
     return navigateTo('/auth?mode=login')

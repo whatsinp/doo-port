@@ -8,9 +8,10 @@ import {
   sendPasswordResetEmail,
   reauthenticateWithCredential,
   EmailAuthProvider,
-  updatePassword
+  updatePassword,
+  confirmPasswordReset
 } from 'firebase/auth'
-import type { User } from 'firebase/auth'
+import type { User, ActionCodeSettings } from 'firebase/auth'
 import { useNuxtApp } from '#app'
 
 export const useAuth = () => {
@@ -38,8 +39,12 @@ export const useAuth = () => {
     return await signOut($auth as ReturnType<typeof getAuth>)
   }
 
-  const resetPassword = async (email: string) => {
-    return await sendPasswordResetEmail($auth as ReturnType<typeof getAuth>, email)
+  const resetPassword = async (email: string, actionCodeSettings?: ActionCodeSettings) => {
+    return await sendPasswordResetEmail($auth as ReturnType<typeof getAuth>, email, actionCodeSettings)
+  }
+
+  const confirmResetPassword = async (oobCode: string, newPassword: string) => {
+    return await confirmPasswordReset($auth as ReturnType<typeof getAuth>, oobCode, newPassword)
   }
 
   const reauthenticate = async (password: string) => {
@@ -60,6 +65,7 @@ export const useAuth = () => {
     registerWithEmail,
     logout,
     resetPassword,
+    confirmResetPassword,
     reauthenticate,
     changePassword
   }

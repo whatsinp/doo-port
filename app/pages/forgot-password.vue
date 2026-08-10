@@ -66,10 +66,18 @@ const handleReset = async () => {
   errorMsg.value = ''
   successMsg.value = ''
   try {
-    await auth.resetPassword(email.value)
+    const actionCodeSettings = {
+      url: `${window.location.origin}/reset-password`,
+      handleCodeInApp: false
+    }
+    await auth.resetPassword(email.value, actionCodeSettings)
     successMsg.value = 'ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว! กรุณาตรวจสอบกล่องจดหมายของคุณ'
   } catch (error: any) {
-    errorMsg.value = error.message || 'ไม่สามารถส่งอีเมลรีเซ็ตรหัสผ่านได้'
+    if (error.code === 'auth/user-not-found' || (error.message && error.message.includes('not found'))) {
+      errorMsg.value = 'ไม่มีข้อมูลผู้ใช้ กรุณาสมัครและเข้าสู่ระบบเพื่อใช้บริการ'
+    } else {
+      errorMsg.value = 'เกิดข้อผิดพลาด: ' + (error.message || 'ไม่สามารถส่งอีเมลรีเซ็ตรหัสผ่านได้')
+    }
   } finally {
     loading.value = false
   }
