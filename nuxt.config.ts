@@ -4,6 +4,7 @@ import Aura from '@primevue/themes/aura'
 export default defineNuxtConfig({
   ssr: false,
   srcDir: 'app/',
+  serverDir: 'server/',
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   app: {
@@ -13,9 +14,9 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css', 'primeicons/primeicons.css'],
   runtimeConfig: {
-    finnhubApiKey: '',
-    coingeckoApiKey: '',
-    goldApiKey: '',
+    finnhubApiKey: process.env.FINNHUB_API_KEY || '',
+    coingeckoApiKey: process.env.COINGECKO_API_KEY || '',
+    goldApiKey: process.env.GOLD_API_KEY || '',
     public: {
       apiBaseUrl: 'http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1',
       firebaseApiKey: '',

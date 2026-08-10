@@ -79,8 +79,8 @@ export const useMarket = () => {
     try {
       const promises = favorites.value.map(async (symbol) => {
         const [quoteRes, histRes] = await Promise.all([
-          $fetch<{ data: MarketQuote }>(`${config.public.apiBaseUrl}/market/quotes/${symbol}`),
-          $fetch<{ data: ChartDataPoint[] }>(`${config.public.apiBaseUrl}/market/historical/${symbol}?timeframe=1D`)
+          $fetch<{ data: MarketQuote }>(`/api/market/quotes/${symbol}`),
+          $fetch<{ data: ChartDataPoint[] }>(`/api/market/historical/${symbol}?timeframe=1D`)
         ])
         
         return {
@@ -106,7 +106,7 @@ export const useMarket = () => {
 
     try {
       const response = await $fetch<{ success: boolean; data: MarketSearchResult[] }>(
-        `${config.public.apiBaseUrl}/market/search?query=${encodeURIComponent(query)}`
+        `/api/market/search?query=${encodeURIComponent(query)}`
       )
 
       if (response.success) {
@@ -126,8 +126,8 @@ export const useMarket = () => {
     loadingDetails.value = true
     try {
       const [quoteRes, histRes] = await Promise.all([
-        $fetch<{ data: MarketQuote }>(`${config.public.apiBaseUrl}/market/quotes/${symbol}`),
-        $fetch<{ data: ChartDataPoint[] }>(`${config.public.apiBaseUrl}/market/historical/${symbol}?timeframe=${timeframe}`)
+        $fetch<{ data: MarketQuote }>(`/api/market/quotes/${symbol}`),
+        $fetch<{ data: ChartDataPoint[] }>(`/api/market/historical/${symbol}?timeframe=${timeframe}`)
       ])
       
       selectedAsset.value = quoteRes.data

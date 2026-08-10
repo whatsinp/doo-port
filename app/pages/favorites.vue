@@ -129,8 +129,8 @@ const fetchMarketDataForFavorites = async () => {
     
     try {
       const [quoteRes, histRes] = await Promise.all([
-        $fetch<any>(`${config.public.apiBaseUrl}/market/quotes/${fav.symbol}`),
-        $fetch<any>(`${config.public.apiBaseUrl}/market/historical/${fav.symbol}?timeframe=1D`)
+        $fetch<any>(`/api/market/quotes/${fav.symbol}`),
+        $fetch<any>(`/api/market/historical/${fav.symbol}?timeframe=1D`)
       ])
       
       results.push({

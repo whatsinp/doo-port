@@ -320,7 +320,7 @@ watch(activeHoldings, async (newHoldings) => {
     const promises = newHoldings.map(async (h) => {
       try {
         const res = await $fetch<{ data: MarketQuote }>(
-          `${config.public.apiBaseUrl}/market/quotes/${h.assetSymbol}`
+          `/api/market/quotes/${h.assetSymbol}`
         )
         return { symbol: h.assetSymbol, quote: res.data }
       } catch {
