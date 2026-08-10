@@ -13,7 +13,11 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css', 'primeicons/primeicons.css'],
   runtimeConfig: {
+    finnhubApiKey: '',
+    coingeckoApiKey: '',
+    goldApiKey: '',
     public: {
+      apiBaseUrl: 'http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1',
       firebaseApiKey: '',
       firebaseAuthDomain: '',
       firebaseProjectId: '',

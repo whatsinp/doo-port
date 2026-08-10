@@ -2,6 +2,7 @@ import { useAuth } from '~/features/auth/composables/useAuth'
 import { getAuth } from 'firebase/auth'
 
 export const useLedger = () => {
+  const config = useRuntimeConfig()
   const auth = useAuth()
 
   const getAuthToken = async () => {
@@ -19,7 +20,7 @@ export const useLedger = () => {
   ) => {
     const token = await getAuthToken()
     const response = await $fetch(
-      'http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/transactions',
+      `${config.public.apiBaseUrl}/transactions`,
       {
         method: 'POST',
         headers: {
@@ -46,7 +47,7 @@ export const useLedger = () => {
   ) => {
     const token = await getAuthToken()
     const response = await $fetch(
-      'http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/transactions/sell',
+      `${config.public.apiBaseUrl}/transactions/sell`,
       {
         method: 'POST',
         headers: {
@@ -67,7 +68,7 @@ export const useLedger = () => {
   const deleteHolding = async (portfolioId: string, assetSymbol: string) => {
     const token = await getAuthToken()
     const response = await $fetch(
-      `http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/transactions/holding/${portfolioId}/${assetSymbol.toUpperCase()}`,
+      `${config.public.apiBaseUrl}/transactions/holding/${portfolioId}/${assetSymbol.toUpperCase()}`,
       {
         method: 'DELETE',
         headers: {

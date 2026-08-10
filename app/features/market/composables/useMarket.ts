@@ -34,6 +34,7 @@ export interface FavoriteAssetData {
 }
 
 export const useMarket = () => {
+  const config = useRuntimeConfig()
   const loading = ref(false)
   const results = ref<MarketSearchResult[]>([])
   const errorMsg = ref('')
@@ -78,8 +79,8 @@ export const useMarket = () => {
     try {
       const promises = favorites.value.map(async (symbol) => {
         const [quoteRes, histRes] = await Promise.all([
-          $fetch<{ data: MarketQuote }>(`http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/quotes/${symbol}`),
-          $fetch<{ data: ChartDataPoint[] }>(`http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/historical/${symbol}?timeframe=1D`)
+          $fetch<{ data: MarketQuote }>(`${config.public.apiBaseUrl}/market/quotes/${symbol}`),
+          $fetch<{ data: ChartDataPoint[] }>(`${config.public.apiBaseUrl}/market/historical/${symbol}?timeframe=1D`)
         ])
         
         return {
@@ -105,7 +106,7 @@ export const useMarket = () => {
 
     try {
       const response = await $fetch<{ success: boolean; data: MarketSearchResult[] }>(
-        `http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/search?query=${encodeURIComponent(query)}`
+        `${config.public.apiBaseUrl}/market/search?query=${encodeURIComponent(query)}`
       )
 
       if (response.success) {
@@ -125,8 +126,8 @@ export const useMarket = () => {
     loadingDetails.value = true
     try {
       const [quoteRes, histRes] = await Promise.all([
-        $fetch<{ data: MarketQuote }>(`http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/quotes/${symbol}`),
-        $fetch<{ data: ChartDataPoint[] }>(`http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/historical/${symbol}?timeframe=${timeframe}`)
+        $fetch<{ data: MarketQuote }>(`${config.public.apiBaseUrl}/market/quotes/${symbol}`),
+        $fetch<{ data: ChartDataPoint[] }>(`${config.public.apiBaseUrl}/market/historical/${symbol}?timeframe=${timeframe}`)
       ])
       
       selectedAsset.value = quoteRes.data

@@ -76,21 +76,23 @@ export const useDashboard = () => {
     }
     loadingPrices.value = true
     try {
-      const promises = newHoldings.map(async (h) => {
-        try {
-          const res = await $fetch<{ data: { price: string } }>(
-            `http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/quotes/${h.symbol}`
-          )
-          return { symbol: h.symbol, price: parseFloat(res.data.price) }
-        } catch {
-          return { symbol: h.symbol, price: 0 }
-        }
-      })
-      const results = await Promise.all(promises)
+      const symbols = newHoldings.map(h => h.symbol).join(',')
+      const res = await $fetch<any>(`/api/assets?symbols=${symbols}`)
+      
       const prices: Record<string, number> = {}
-      for (const r of results) {
-        if (r.price > 0) prices[r.symbol] = r.price
+      
+      if (res) {
+        if (res.stocks) {
+          res.stocks.forEach((s: any) => { prices[s.symbol] = parseFloat(s.price) })
+        }
+        if (res.crypto) {
+          res.crypto.forEach((c: any) => { prices[c.symbol] = parseFloat(c.price) })
+        }
+        if (res.gold) {
+          prices[res.gold.symbol] = parseFloat(res.gold.price)
+        }
       }
+      
       currentPrices.value = prices
     } finally {
       loadingPrices.value = false

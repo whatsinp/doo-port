@@ -278,6 +278,7 @@ import { useLedger } from '~/features/transactions/composables/useLedger'
 
 const route = useRoute()
 const portfolioId = route.params.id as string
+const config = useRuntimeConfig()
 
 const { portfolios } = usePortfolios()
 const portfolioDetails = computed(() => portfolios.value.find(p => p.id === portfolioId))
@@ -319,7 +320,7 @@ watch(activeHoldings, async (newHoldings) => {
     const promises = newHoldings.map(async (h) => {
       try {
         const res = await $fetch<{ data: MarketQuote }>(
-          `http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/quotes/${h.assetSymbol}`
+          `${config.public.apiBaseUrl}/market/quotes/${h.assetSymbol}`
         )
         return { symbol: h.assetSymbol, quote: res.data }
       } catch {

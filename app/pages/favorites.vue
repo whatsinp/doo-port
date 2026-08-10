@@ -109,6 +109,7 @@ import SparklineChart from '~/components/SparklineChart.vue'
 
 const router = useRouter()
 const { favorites, loading, toggleFavorite } = useFavorites()
+const config = useRuntimeConfig()
 
 const loadingMarketData = ref(false)
 const enrichedFavorites = ref<any[]>([])
@@ -128,8 +129,8 @@ const fetchMarketDataForFavorites = async () => {
     
     try {
       const [quoteRes, histRes] = await Promise.all([
-        $fetch<any>(`http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/quotes/${fav.symbol}`),
-        $fetch<any>(`http://127.0.0.1:5001/gen-lang-client-0765785441/us-central1/api/api/v1/market/historical/${fav.symbol}?timeframe=1D`)
+        $fetch<any>(`${config.public.apiBaseUrl}/market/quotes/${fav.symbol}`),
+        $fetch<any>(`${config.public.apiBaseUrl}/market/historical/${fav.symbol}?timeframe=1D`)
       ])
       
       results.push({

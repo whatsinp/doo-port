@@ -23,8 +23,11 @@ export default defineNuxtPlugin(() => {
   const db = getFirestore(app)
   const storage = getStorage(app)
 
+  // Change to true to use local Firebase emulators
+  const useEmulator = false
+
   // Connect to local emulators if in development
-  if (process.env.NODE_ENV === 'development') {
+  if (useEmulator && process.env.NODE_ENV === 'development') {
     // Only connect if not already connected (prevent HMR errors)
     if (!auth.emulatorConfig) {
       connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
