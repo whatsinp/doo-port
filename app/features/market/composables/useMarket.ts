@@ -78,23 +78,38 @@ export const useMarket = () => {
     loadingFavorites.value = true
     try {
       const promises = favorites.value.map(async (symbol) => {
-        const [quoteRes, histRes] = await Promise.all([
-          $fetch<{ data: MarketQuote }>(`/api/market/quotes/${symbol}`),
-          $fetch<{ data: ChartDataPoint[] }>(`/api/market/historical/${symbol}?timeframe=1D`)
-        ])
-        
-        return {
-          symbol,
-          name: quoteRes.data.name,
-          type: 'Stock', // We default to Stock here, or fetch from search endpoint if we had one
-          quote: quoteRes.data,
-          history: histRes.data
-        } as FavoriteAssetData
+        try {
+          const [quoteRes, histRes] = await Promise.all([
+            $fetch<any>(`/api/market/quotes/${symbol}`),
+            $fetch<any>(`/api/market/historical/${symbol}?timeframe=1D`)
+          ])
+          
+          if (!quoteRes.success || !histRes.success) {
+            throw new Error('API returned success: false')
+          }
+          
+          return {
+            symbol,
+            name: quoteRes.data?.name || symbol,
+            type: 'Stock',
+            quote: quoteRes.data,
+            history: histRes.data
+          } as FavoriteAssetData
+        } catch (err) {
+          return {
+            symbol,
+            name: symbol,
+            type: 'Stock',
+            quote: null,
+            history: [],
+            error: true
+          } as any
+        }
       })
       
       favoritesData.value = await Promise.all(promises)
     } catch (e: any) {
-      console.error('Failed to fetch favorites data:', e)
+      console.warn('Failed to fetch favorites data:', e.message)
     } finally {
       loadingFavorites.value = false
     }
@@ -122,18 +137,25 @@ export const useMarket = () => {
     }
   }
 
-  const fetchAssetDetails = async (symbol: string, timeframe: string = '1D') => {
+  const fetchAssetDetails = async (symbol: string, timeframe: string = '1D', nameOverride?: string) => {
     loadingDetails.value = true
     try {
       const [quoteRes, histRes] = await Promise.all([
-        $fetch<{ data: MarketQuote }>(`/api/market/quotes/${symbol}`),
-        $fetch<{ data: ChartDataPoint[] }>(`/api/market/historical/${symbol}?timeframe=${timeframe}`)
+        $fetch<any>(`/api/market/quotes/${symbol}`),
+        $fetch<any>(`/api/market/historical/${symbol}?timeframe=${timeframe}`)
       ])
       
+      if (!quoteRes.success || !histRes.success) {
+        throw new Error('API returned success: false')
+      }
+      
       selectedAsset.value = quoteRes.data
+      if (nameOverride && selectedAsset.value) {
+        selectedAsset.value.name = nameOverride
+      }
       historicalData.value = histRes.data
     } catch (e: any) {
-      console.error('Failed to fetch details:', e)
+      console.warn('Failed to fetch details:', e.message)
     } finally {
       loadingDetails.value = false
     }

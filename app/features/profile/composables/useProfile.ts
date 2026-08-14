@@ -44,7 +44,7 @@ export const useProfile = () => {
 
           // Apply Language
           if (data.language) {
-            setLocale(data.language)
+            setLocale(data.language as "en" | "th")
           }
         } else {
           // Setup default profile

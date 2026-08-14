@@ -44,6 +44,7 @@
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/test-utils": "^4.1.0",
     "@playwright/test": "^1.62.1",
+    "@types/uuid": "^10.0.0",
     "@vue/test-utils": "^2.4.11",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",

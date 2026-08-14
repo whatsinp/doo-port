@@ -1,19 +1,20 @@
 <template>
   <div class="relative w-full h-[300px]">
     <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-800/50 z-10 backdrop-blur-sm rounded-lg">
-      <i class="pi pi-spinner pi-spin text-3xl text-blue-500"></i>
+      <i class="pi pi-spinner pi-spin text-3xl text-blue-500"/>
     </div>
-    <div ref="chartContainer" class="w-full h-full rounded-lg overflow-hidden"></div>
+    <div ref="chartContainer" class="w-full h-full overflow-hidden"/>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { createChart, IChartApi, ISeriesApi, ColorType, AreaSeries } from 'lightweight-charts'
+import { createChart, ColorType, AreaSeries } from 'lightweight-charts'
+import type { IChartApi, ISeriesApi, Time } from 'lightweight-charts'
 import { useWindowSize } from '@vueuse/core'
 
 const props = defineProps<{
-  data: { time: number; value: number }[]
+  data: any[]
   loading?: boolean
   color?: string
 }>()

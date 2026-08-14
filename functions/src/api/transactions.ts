@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { LedgerService } from '../services/LedgerService'
-import { requireAuth, AuthenticatedRequest } from '../middleware/auth'
+import { requireAuth } from '../middleware/auth'
+import type { AuthenticatedRequest } from '../middleware/auth'
 
 const router = Router()
 const ledgerService = new LedgerService()

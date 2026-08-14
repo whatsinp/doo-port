@@ -126,6 +126,7 @@
               <template v-else>
                 <div
                   v-for="asset in favoritesData"
+                  :id="'asset-row-' + asset.symbol"
                   :key="asset.symbol"
                   class="px-4 py-3 border-b border-gray-50 dark:border-gray-700/30 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-between gap-4"
                   :class="
@@ -144,11 +145,13 @@
 
                   <!-- Sparkline Chart -->
                   <div class="w-1/3 h-10 cursor-pointer" @click="onRowClick(asset.symbol)">
-                    <SparklineChart
-                      v-if="asset.history && asset.history.length > 0"
-                      :data="asset.history"
-                      :color="asset.quote.changePercent >= 0 ? '#10b981' : '#f43f5e'"
-                    />
+                    <template v-if="!asset.error && asset.quote">
+                      <SparklineChart
+                        v-if="asset.history && asset.history.length > 0"
+                        :data="asset.history"
+                        :color="asset.quote.changePercent >= 0 ? '#10b981' : '#f43f5e'"
+                      />
+                    </template>
                   </div>
 
                   <!-- Price & Action -->
@@ -157,18 +160,26 @@
                       class="flex flex-col items-end cursor-pointer"
                       @click="onRowClick(asset.symbol)"
                     >
-                      <div class="font-bold text-gray-900 dark:text-white text-sm">
-                        ${{ asset.quote.price }}
-                      </div>
-                      <div
-                        class="text-xs font-semibold"
-                        :class="
-                          asset.quote.changePercent >= 0 ? 'text-emerald-500' : 'text-rose-500'
-                        "
-                      >
-                        {{ asset.quote.changePercent >= 0 ? '+' : ''
-                        }}{{ asset.quote.changePercent }}%
-                      </div>
+                      <template v-if="!asset.error && asset.quote">
+                        <div class="font-bold text-gray-900 dark:text-white text-sm">
+                          ${{ asset.quote.price }}
+                        </div>
+                        <div
+                          class="text-xs font-semibold"
+                          :class="
+                            asset.quote.changePercent >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                          "
+                        >
+                          {{ asset.quote.changePercent >= 0 ? '+' : ''
+                          }}{{ asset.quote.changePercent }}%
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="text-xs text-rose-500 flex items-center gap-1">
+                          <i class="pi pi-exclamation-triangle"></i>
+                          <span>โหลดไม่สำเร็จ</span>
+                        </div>
+                      </template>
                     </div>
                     <button
                       @click.stop="toggleFavoriteAndRefresh(asset.symbol)"
@@ -367,7 +378,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMarket } from '~/features/market/composables/useMarket'
 import AssetChart from '~/components/AssetChart.vue'
 import SparklineChart from '~/components/SparklineChart.vue'
@@ -375,6 +387,7 @@ import TransactionModal from '~/components/TransactionModal.vue'
 
 const searchQuery = ref('')
 const activeTimeframe = ref('1D')
+const route = useRoute()
 
 const {
   searchAssets,
@@ -416,12 +429,25 @@ watch(
     ) {
       await fetchFavoritesData()
       // Auto-select the first favorite if none is selected
-      if (favoritesData.value.length > 0 && !selectedAsset.value) {
+      if (favoritesData.value.length > 0 && !selectedAsset.value && !route.query.symbol) {
         onRowClick(favoritesData.value[0].symbol)
       }
     }
   },
   { immediate: true }
+)
+
+watch(
+  favoritesData,
+  () => {
+    if (selectedAsset.value) {
+      nextTick(() => {
+        const el = document.getElementById('asset-row-' + selectedAsset.value.symbol)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      })
+    }
+  },
+  { deep: true }
 )
 
 let searchTimeout: any = null
@@ -457,7 +483,21 @@ const toggleFavoriteAndRefresh = async (symbol: string) => {
 const onRowClick = async (symbol: string) => {
   activeTimeframe.value = '1D' // Reset timeframe
   await fetchAssetDetails(symbol, activeTimeframe.value)
+  
+  // Scroll the selected asset into view in the sidebar
+  nextTick(() => {
+    const el = document.getElementById('asset-row-' + symbol)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  })
 }
+
+onMounted(() => {
+  if (route.query.symbol) {
+    onRowClick(route.query.symbol as string)
+  }
+})
 
 const setTimeframe = async (tf: string) => {
   if (!selectedAsset.value || activeTimeframe.value === tf) return

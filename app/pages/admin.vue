@@ -7,7 +7,7 @@
     <div class="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4 mb-6">
       <div class="flex">
         <div class="flex-shrink-0">
-          <i class="pi pi-exclamation-triangle text-yellow-400"></i>
+          <i class="pi pi-exclamation-triangle text-yellow-400"/>
         </div>
         <div class="ml-3">
           <p class="text-sm text-yellow-700 dark:text-yellow-300">

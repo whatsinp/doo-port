@@ -1,4 +1,4 @@
-import { MarketProvider } from './MarketProvider.interface'
+import type { MarketProvider } from './MarketProvider.interface'
 
 export class MockMarketProvider implements MarketProvider {
   private mockDb = [

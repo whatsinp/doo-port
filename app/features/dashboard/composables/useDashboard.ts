@@ -40,7 +40,9 @@ export const useDashboard = () => {
     let total = new Decimal(0)
     for (const h of allHoldings.value) {
       if (parseFloat(h.quantity) > 0) {
-        total = total.plus(new Decimal(h.costBasis || 0))
+        let cost = parseFloat(h.costBasis || '0')
+        if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 35
+        total = total.plus(new Decimal(cost))
       }
     }
     return total.toNumber()
@@ -91,6 +93,9 @@ export const useDashboard = () => {
         if (res.gold) {
           prices[res.gold.symbol] = parseFloat(res.gold.price)
         }
+        if (res.thaiGold) {
+          res.thaiGold.forEach((g: any) => { prices[g.symbol] = parseFloat(g.price) })
+        }
       }
       
       currentPrices.value = prices
@@ -103,7 +108,8 @@ export const useDashboard = () => {
     if (Object.keys(currentPrices.value).length === 0) return 0
     let total = 0
     for (const h of aggregatedHoldings.value) {
-      const price = currentPrices.value[h.symbol] || (h.quantity > 0 ? h.costBasis / h.quantity : 0) // fallback to average cost if API fails
+      let price = currentPrices.value[h.symbol] || (h.quantity > 0 ? h.costBasis / h.quantity : 0) // fallback to average cost if API fails
+      if (h.symbol.startsWith('THAIGOLD')) price = price / 35
       total += h.quantity * price
     }
     return total

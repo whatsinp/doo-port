@@ -5,7 +5,7 @@ export const fetchStockPrice = defineCachedFunction(async (symbol: string) => {
   }
   
   // Free tier Finnhub limits: 60 API calls/minute. 
-  const res = await $fetch<any>(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${config.finnhubApiKey}`)
+  const res = await $fetch<any>(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${config.finnhubApiKey}`, { retry: 0 })
   
   // res.c: Current price, res.d: Change, res.dp: Percent change
   if (res && res.c !== undefined && res.c !== 0) {

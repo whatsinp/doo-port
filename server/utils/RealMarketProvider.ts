@@ -1,4 +1,4 @@
-import { MarketProvider } from './MockMarketProvider'
+import type { MarketProvider } from './MockMarketProvider'
 
 const CRYPTO_MAP: Record<string, string> = {
   'BTC': 'bitcoin',
@@ -13,7 +13,38 @@ const CRYPTO_MAP: Record<string, string> = {
   'AVAX': 'avalanche-2',
   'LINK': 'chainlink',
   'DOT': 'polkadot',
-  'MATIC': 'matic-network'
+  'MATIC': 'matic-network',
+  'GOLD': 'pax-gold',
+  'XAU': 'pax-gold',
+  'PAXG': 'pax-gold'
+}
+
+const NAME_MAP: Record<string, string> = {
+  'AAPL': 'Apple Inc.',
+  'MSFT': 'Microsoft Corporation',
+  'GOOGL': 'Alphabet Inc.',
+  'AMZN': 'Amazon.com Inc.',
+  'NVDA': 'NVIDIA Corporation',
+  'META': 'Meta Platforms Inc.',
+  'TSLA': 'Tesla Inc.',
+  'BTC': 'Bitcoin',
+  'ETH': 'Ethereum',
+  'SOL': 'Solana',
+  'BNB': 'Binance Coin',
+  'DOGE': 'Dogecoin',
+  'PTT': 'PTT Public Company Limited',
+  'AOT': 'Airports of Thailand PLC',
+  'ADVANC': 'Advanced Info Service PLC',
+  'CPALL': 'CP ALL Public Company Limited',
+  'KBANK': 'Kasikornbank Public Company Limited',
+  'SCB': 'SCB X Public Company Limited',
+  'NFLX': 'Netflix Inc.',
+  'DIS': 'The Walt Disney Company',
+  'GOLD': 'Gold (XAU/USD)',
+  'XAU': 'Gold (XAU/USD)',
+  'THAIGOLD': 'ทองคำแท่ง 96.5%',
+  'THAIGOLD_ORN': 'ทองคำรูปพรรณ 96.5%',
+  'THAIGOLD_ORNAMENT': 'ทองคำรูปพรรณ 96.5%'
 }
 
 export class RealMarketProvider implements MarketProvider {
@@ -39,6 +70,14 @@ export class RealMarketProvider implements MarketProvider {
     }
 
     const results: any[] = []
+
+    // 0. Manual intercepts for common commodities
+    const qUpper = query.toUpperCase()
+    if (qUpper.includes('GOLD') || qUpper.includes('ทอง') || qUpper.includes('XAU')) {
+      results.push({ symbol: 'THAIGOLD', name: 'ทองคำแท่ง 96.5% (1 บาททอง)', currency: 'THB', exchange: 'THAI', type: 'Commodity' })
+      results.push({ symbol: 'THAIGOLD_ORN', name: 'ทองรูปพรรณ 96.5% (1 บาททอง)', currency: 'THB', exchange: 'THAI', type: 'Commodity' })
+      results.push({ symbol: 'XAU', name: 'Gold Spot (1 oz)', currency: 'USD', exchange: 'COMMODITY', type: 'Commodity' })
+    }
 
     // 1. Search Finnhub
     try {
@@ -99,6 +138,32 @@ export class RealMarketProvider implements MarketProvider {
   async getQuote(symbol: string): Promise<any> {
     const sym = symbol.toUpperCase()
 
+    // 0. Thai Gold & Ornament
+    if (sym === 'THAIGOLD' || sym === 'THAIGOLD_ORN' || sym === 'THAIGOLD_ORNAMENT') {
+      try {
+        const res = await fetch('https://api.chnwt.dev/thai-gold-api/latest')
+        if (res.ok) {
+          const data = await res.json()
+          const goldData = sym === 'THAIGOLD' ? data.response.price.gold_bar : data.response.price.gold
+          const sellStr = goldData.sell.replace(/,/g, '')
+          const buyStr = goldData.buy.replace(/,/g, '')
+          return {
+            symbol: sym,
+            name: NAME_MAP[sym] || (sym === 'THAIGOLD' ? 'ทองคำแท่ง 96.5%' : 'ทองรูปพรรณ 96.5%'),
+            price: parseFloat(sellStr).toFixed(2),
+            currency: 'THB',
+            changePercent: 0, // API doesn't provide % change easily
+            dayLow: parseFloat(buyStr).toFixed(2),
+            dayHigh: parseFloat(sellStr).toFixed(2),
+            asOf: new Date().toISOString()
+          }
+        }
+      } catch (e) {
+        console.error('Thai Gold API error:', e)
+      }
+      throw new Error(`Thai Gold API unavailable`)
+    }
+
     // 1. Check if it's a known crypto
     if (CRYPTO_MAP[sym]) {
       try {
@@ -109,7 +174,7 @@ export class RealMarketProvider implements MarketProvider {
           if (data[id]) {
             return {
               symbol: sym,
-              name: sym, // Would need an extra API call to get real name, keep simple
+              name: NAME_MAP[sym] || sym,
               price: data[id].usd.toFixed(2),
               currency: 'USD',
               changePercent: data[id].usd_24h_change ? parseFloat(data[id].usd_24h_change.toFixed(2)) : 0,
@@ -118,10 +183,38 @@ export class RealMarketProvider implements MarketProvider {
               asOf: new Date().toISOString()
             }
           }
+        } else {
+          console.warn(`CoinGecko rate limit hit for ${sym}. Trying Binance...`)
         }
       } catch (e) {
         console.error('CoinGecko quote error:', e)
       }
+
+      // Fallback to Binance API for crypto if CoinGecko fails
+      try {
+        let binanceSym = sym
+        if (sym === 'XAU' || sym === 'GOLD') binanceSym = 'PAXG'
+        const binanceRes = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSym}USDT`)
+        if (binanceRes.ok) {
+           const bData = await binanceRes.json()
+           if (bData && bData.lastPrice) {
+             return {
+              symbol: sym,
+              name: NAME_MAP[sym] || sym, 
+              price: parseFloat(bData.lastPrice).toFixed(2),
+              currency: 'USD',
+              changePercent: parseFloat(bData.priceChangePercent),
+              dayLow: parseFloat(bData.lowPrice).toFixed(2),
+              dayHigh: parseFloat(bData.highPrice).toFixed(2),
+              asOf: new Date().toISOString()
+             }
+           }
+        }
+      } catch(e) {
+         console.error('Binance quote error:', e)
+      }
+
+      throw new Error(`Crypto APIs unavailable for ${sym}`)
     }
 
     // 2. Try CoinGecko Search to find ID if not in map, but looks like crypto (optional, skip to avoid rate limits)
@@ -136,7 +229,7 @@ export class RealMarketProvider implements MarketProvider {
           if (data && data.c > 0) {
             return {
               symbol: sym,
-              name: sym,
+              name: NAME_MAP[sym] || sym,
               price: data.c.toFixed(2),
               currency: 'USD',
               changePercent: data.dp ? parseFloat(data.dp.toFixed(2)) : 0,
@@ -156,6 +249,17 @@ export class RealMarketProvider implements MarketProvider {
 
   async getHistoricalData(symbol: string, timeframe: string): Promise<any[]> {
     const sym = symbol.toUpperCase()
+
+    // 0. Thai Gold Historical (Mock fallback)
+    if (sym === 'THAIGOLD' || sym === 'THAIGOLD_ORN' || sym === 'THAIGOLD_ORNAMENT') {
+      try {
+        const quote = await this.getQuote(sym)
+        const currentPrice = parseFloat(quote.price)
+        return this.generateMockHistoryFromPrice(sym, currentPrice, timeframe)
+      } catch (e) {
+        return []
+      }
+    }
 
     // 1. Try Crypto First
     if (CRYPTO_MAP[sym]) {
@@ -179,6 +283,16 @@ export class RealMarketProvider implements MarketProvider {
         }
       } catch (e) {
         console.error('CoinGecko history error:', e)
+      }
+
+      // If CoinGecko failed, don't fall through to Finnhub stock endpoint!
+      try {
+        const quote = await this.getQuote(sym)
+        const currentPrice = parseFloat(quote.price)
+        return this.generateMockHistoryFromPrice(sym, currentPrice, timeframe)
+      } catch (e) {
+        console.error('Failed to generate fallback history for crypto:', e)
+        return []
       }
     }
 

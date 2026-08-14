@@ -4,15 +4,15 @@
       <div class="flex items-center space-x-4">
         <NuxtLink href="/portfolio">
           <button class="p-2.5 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors flex items-center justify-center">
-            <i class="pi pi-arrow-left text-lg"></i>
+            <i class="pi pi-arrow-left text-lg"/>
           </button>
         </NuxtLink>
         <button
           v-if="portfolioId !== 'all'"
-          @click="openTransactionDialog('BUY')"
           class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+          @click="openTransactionDialog('BUY')"
         >
-          <i class="pi pi-plus"></i>
+          <i class="pi pi-plus"/>
           <span>บันทึกธุรกรรม</span>
         </button>
       </div>
@@ -30,11 +30,11 @@
 
     <!-- Holdings Section -->
     <div v-if="loading" class="flex justify-center p-12">
-      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"/>
     </div>
     
     <div v-else-if="activeHoldings.length === 0" class="bg-white dark:bg-gray-800 p-12 text-center rounded-xl shadow border border-gray-200 dark:border-gray-700">
-      <i class="pi pi-folder-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+      <i class="pi pi-folder-open text-6xl text-gray-300 dark:text-gray-600 mb-4"/>
       <h3 class="text-lg font-medium text-gray-900 dark:text-white">ไม่พบสินทรัพย์</h3>
       <p class="mt-1 text-gray-500 dark:text-gray-400">คลิก "บันทึกธุรกรรม" เพื่อเพิ่มสินทรัพย์ในพอร์ตนี้!</p>
     </div>
@@ -57,21 +57,19 @@
             
             <!-- Current Value -->
             <div class="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-xl border border-gray-100 dark:border-gray-700 relative overflow-hidden transition-all hover:shadow-md">
-              <div v-if="loadingPrices" class="absolute inset-0 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-10">
-                <i class="pi pi-spin pi-spinner text-xl text-blue-500"></i>
-              </div>
-              <h2 class="text-gray-500 dark:text-gray-400 font-medium mb-1">มูลค่าปัจจุบันรวม</h2>
+
+              <h2 class="text-gray-500 dark:text-gray-400 font-medium mb-1">มูลค่าสินทรัพย์รวม</h2>
               <div class="text-4xl font-extrabold text-gray-900 dark:text-white drop-shadow-sm flex items-baseline gap-2">
-                {{ formatCurrency(String(currentTotalPortfolioValueUSD), 'USD') }} <span class="text-xl font-bold text-gray-500">USD</span>
+                {{ formatCurrency(String(totalPortfolioValue), 'USD') }} <span class="text-xl font-bold text-gray-500">USD</span>
               </div>
               <div class="text-sm font-medium text-gray-400 mt-2">
-                ≈ ฿{{ (currentTotalPortfolioValueUSD * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
+                ≈ ฿{{ (totalPortfolioValue * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
               </div>
             </div>
 
             <!-- Profit / Loss -->
             <div class="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-xl border border-gray-100 dark:border-gray-700 relative overflow-hidden transition-all hover:shadow-md">
-              <div v-if="loadingPrices" class="absolute inset-0 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-10"></div>
+
               <h2 class="text-gray-500 dark:text-gray-400 font-medium mb-1">กำไร / ขาดทุน (P/L)</h2>
               <div class="text-4xl font-extrabold flex items-baseline gap-2 drop-shadow-sm" :class="totalProfitLoss >= 0 ? 'text-green-500' : 'text-rose-500'">
                 {{ totalProfitLoss >= 0 ? '+' : '' }}{{ formatCurrency(String(totalProfitLoss), 'USD') }}
@@ -79,8 +77,8 @@
               </div>
               <div class="flex items-center gap-3 mt-2">
                 <div class="text-sm font-bold" :class="totalProfitLoss >= 0 ? 'text-green-500' : 'text-rose-500'">
-                  <i :class="totalProfitLoss >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i> 
-                  {{ totalProfitLossPercent.toFixed(2) }}%
+                  <i :class="totalProfitLoss >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"/> 
+                  {{ Number(totalProfitLossPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
                 </div>
                 <div class="text-sm font-medium" :class="totalProfitLoss >= 0 ? 'text-green-500 dark:text-green-400' : 'text-rose-500 dark:text-rose-400'">
                   ≈ {{ totalProfitLoss >= 0 ? '+' : '' }}฿{{ (Math.abs(totalProfitLoss) * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
@@ -97,37 +95,46 @@
         <div 
           v-for="holding in activeHoldings" 
           :key="holding.id"
-          @click="openDetailsModal(holding)"
           class="rounded-2xl p-6 text-white flex flex-col justify-between min-h-[160px] shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl cursor-pointer relative overflow-hidden group"
           :style="{ backgroundColor: getAssetColor(holding.assetSymbol) }"
+          @click="openDetailsModal(holding)"
         >
           <!-- Background gradient overlay for depth -->
-          <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-300"/>
           
-          <div v-if="loadingPrices" class="absolute inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-10">
-            <i class="pi pi-spin pi-spinner text-white text-2xl"></i>
-          </div>
+
           
           <div class="relative z-10 flex items-center justify-between mb-6">
             <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md shadow-inner text-2xl font-bold">
-                {{ holding.assetSymbol.charAt(0) }}
-              </div>
+              <AssetLogo :symbol="holding.assetSymbol" class="w-14 h-14 rounded-full text-2xl" />
               <div>
                 <h3 class="text-2xl font-bold tracking-tight leading-tight">{{ holding.assetSymbol }}</h3>
-                <p class="text-sm text-white/80 font-medium truncate max-w-[150px]">{{ getAssetProfitLoss(holding).quote?.name || 'Loading...' }}</p>
+                <p class="text-sm text-white/80 font-medium truncate max-w-[150px]">{{ getAssetProfitLoss(holding).quote?.name || '' }}</p>
               </div>
             </div>
           </div>
 
           <div class="relative z-10 mt-auto">
-            <div class="text-3xl font-extrabold mb-4 drop-shadow-sm">
-              {{ formatCurrency(String(getAssetProfitLoss(holding).currentVal), holding.tradeCurrency) }}
+            <div class="text-3xl font-extrabold mb-4 drop-shadow-sm flex items-baseline gap-2 flex-wrap">
+              <template v-if="holding.assetSymbol.startsWith('THAIGOLD')">
+                {{ formatCurrency(getAssetProfitLoss(holding).currentVal, 'THB') }}
+              </template>
+              <template v-else>
+                {{ formatCurrency(getAssetProfitLoss(holding).currentVal, 'USD') }}
+                <span class="text-lg font-medium opacity-90">
+                  ≈ {{ formatCurrency(getAssetProfitLoss(holding).currentVal * 35, 'THB') }}
+                </span>
+              </template>
             </div>
             
             <div class="inline-flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm font-bold shadow-inner" :class="getAssetProfitLoss(holding).pl >= 0 ? 'text-green-300' : 'text-rose-300'">
-              <i :class="getAssetProfitLoss(holding).pl >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"></i>
-              <span>% กำไรและมูลค่า: {{ getAssetProfitLoss(holding).plPercent.toFixed(2) }}% ({{ getAssetProfitLoss(holding).pl >= 0 ? '+' : '' }}{{ formatCurrency(String(getAssetProfitLoss(holding).pl), holding.tradeCurrency) }})</span>
+              <i :class="getAssetProfitLoss(holding).pl >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"/>
+              <template v-if="holding.assetSymbol.startsWith('THAIGOLD')">
+                <span>% กำไรและมูลค่า: {{ Number(getAssetProfitLoss(holding).plPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% ({{ getAssetProfitLoss(holding).pl >= 0 ? '+' : '' }}{{ formatCurrency(getAssetProfitLoss(holding).pl, 'THB') }})</span>
+              </template>
+              <template v-else>
+                <span>% กำไรและมูลค่า: {{ Number(getAssetProfitLoss(holding).plPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% ({{ getAssetProfitLoss(holding).pl >= 0 ? '+' : '' }}{{ formatCurrency(getAssetProfitLoss(holding).pl, 'USD') }} ≈ {{ getAssetProfitLoss(holding).pl >= 0 ? '+' : '' }}{{ formatCurrency(getAssetProfitLoss(holding).pl * 35, 'THB') }})</span>
+              </template>
             </div>
           </div>
         </div>
@@ -136,9 +143,9 @@
 
     <TransactionModal
       v-model="showTxDialog"
-      :fixedPortfolioId="portfolioId"
-      :defaultSymbol="txForm.symbol"
-      :defaultType="txType"
+      :fixed-portfolio-id="portfolioId"
+      :default-symbol="txForm.symbol"
+      :default-type="txType"
       @transaction-success="onTransactionSuccess"
     />
 
@@ -172,20 +179,14 @@
             <div class="p-8">
               <div class="flex justify-between items-start mb-8">
                 <div class="flex items-center gap-4">
-                  <div 
-                    class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg text-3xl font-bold text-white relative overflow-hidden"
-                    :style="{ backgroundColor: getAssetColor(selectedHoldingForDetails.assetSymbol) }"
-                  >
-                    <div class="absolute inset-0 bg-white/20"></div>
-                    <span class="relative z-10">{{ selectedHoldingForDetails.assetSymbol.charAt(0) }}</span>
-                  </div>
+                  <AssetLogo :symbol="selectedHoldingForDetails.assetSymbol" class="w-16 h-16 rounded-2xl shadow-lg text-3xl text-white" />
                   <div>
                     <h2 class="text-3xl font-bold text-gray-900 tracking-tight">{{ selectedHoldingForDetails.assetSymbol }}</h2>
                     <p class="text-gray-600 font-medium line-clamp-1">{{ getAssetProfitLoss(selectedHoldingForDetails).quote?.name || 'Loading...' }}</p>
                   </div>
                 </div>
-                <button @click="closeDetailsModal" class="w-10 h-10 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-gray-600 transition-colors">
-                  <i class="pi pi-times text-lg"></i>
+                <button class="w-10 h-10 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-gray-600 transition-colors" @click="closeDetailsModal">
+                  <i class="pi pi-times text-lg"/>
                 </button>
               </div>
 
@@ -199,10 +200,10 @@
                   <div class="flex flex-col">
                     <p class="text-sm text-gray-500 font-bold mb-1">ราคาปัจจุบัน <span class="text-xs font-normal">(& % เปลี่ยน 1 วัน)</span></p>
                     <div class="flex items-center gap-3">
-                      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(String(getAssetProfitLoss(selectedHoldingForDetails).price), selectedHoldingForDetails.tradeCurrency) }}</p>
+                      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(toTHB(selectedHoldingForDetails.assetSymbol, getAssetProfitLoss(selectedHoldingForDetails).price), 'THB') }}</p>
                       <div class="inline-flex items-center gap-1 px-2 py-1 rounded-lg font-bold text-xs" :class="(getAssetProfitLoss(selectedHoldingForDetails).quote?.changePercent || 0) >= 0 ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'">
-                        <i :class="(getAssetProfitLoss(selectedHoldingForDetails).quote?.changePercent || 0) >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-[10px]"></i>
-                        {{ (getAssetProfitLoss(selectedHoldingForDetails).quote?.changePercent || 0).toFixed(2) }}%
+                        <i :class="(getAssetProfitLoss(selectedHoldingForDetails).quote?.changePercent || 0) >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-[10px]"/>
+                        {{ Number(getAssetProfitLoss(selectedHoldingForDetails).quote?.changePercent || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
                       </div>
                     </div>
                   </div>
@@ -210,27 +211,27 @@
 
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                   <p class="text-sm text-gray-500 font-bold mb-1">ต้นทุนต่อหุ้น</p>
-                  <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(selectedHoldingForDetails.averageCost, selectedHoldingForDetails.tradeCurrency) }}</p>
+                  <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(toTHB(selectedHoldingForDetails.assetSymbol, selectedHoldingForDetails.averageCost), 'THB') }}</p>
                 </div>
 
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                   <p class="text-sm text-gray-500 font-bold mb-1">ต้นทุนรวม</p>
-                  <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(selectedHoldingForDetails.costBasis, selectedHoldingForDetails.tradeCurrency) }}</p>
+                  <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(toTHB(selectedHoldingForDetails.assetSymbol, selectedHoldingForDetails.costBasis), 'THB') }}</p>
                 </div>
               </div>
 
               <!-- Actions -->
               <div v-if="portfolioId !== 'all'" class="flex gap-4">
-                <button @click="openTxFromDetails('BUY')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2">
-                  <i class="pi pi-arrow-down-left"></i> ซื้อเพิ่ม
+                <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2" @click="openTxFromDetails('BUY')">
+                  <i class="pi pi-arrow-down-left"/> ซื้อเพิ่ม
                 </button>
-                <button @click="openTxFromDetails('SELL')" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2">
-                  <i class="pi pi-arrow-up-right"></i> ขายออก
+                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2" @click="openTxFromDetails('SELL')">
+                  <i class="pi pi-arrow-up-right"/> ขายออก
                 </button>
               </div>
               <div v-if="portfolioId !== 'all'" class="mt-4">
-                <button @click="handleDeleteFromDetails" class="w-full bg-white/40 hover:bg-red-50 text-red-600 py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-red-200/50 hover:border-red-300">
-                  <i class="pi pi-trash"></i> ลบสินทรัพย์นี้
+                <button class="w-full bg-white/40 hover:bg-red-50 text-red-600 py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-red-200/50 hover:border-red-300" @click="handleDeleteFromDetails">
+                  <i class="pi pi-trash"/> ลบสินทรัพย์นี้
                 </button>
               </div>
 
@@ -248,6 +249,10 @@ import { ref, computed, watch } from 'vue'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import TransactionModal from '~/components/TransactionModal.vue'
+import { useRoute } from 'vue-router'
+import { useHoldings } from '~/features/portfolio/composables/useHoldings'
+import { usePortfolios } from '~/features/portfolio/composables/usePortfolios'
+import { useLedger } from '~/features/transactions/composables/useLedger'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -271,10 +276,6 @@ const getAssetColor = (symbol: string) => {
   }
   return colorPalette[Math.abs(hash) % colorPalette.length]
 }
-import { useRoute } from 'vue-router'
-import { useHoldings } from '~/features/portfolio/composables/useHoldings'
-import { usePortfolios } from '~/features/portfolio/composables/usePortfolios'
-import { useLedger } from '~/features/transactions/composables/useLedger'
 
 const route = useRoute()
 const portfolioId = route.params.id as string
@@ -286,12 +287,24 @@ const portfolioDetails = computed(() => portfolios.value.find(p => p.id === port
 const { holdings, loading } = useHoldings(portfolioId)
 const ledger = useLedger()
 
-const activeHoldings = computed(() => {
-  return holdings.value.filter(h => h.quantity > 0)
+const totalPortfolioValue = computed(() => {
+  return activeHoldings.value.reduce((total, h) => {
+    let price = currentQuotes.value[h.assetSymbol] ? parseFloat(currentQuotes.value[h.assetSymbol].price) : 0
+    if (h.assetSymbol.startsWith('THAIGOLD')) price = price / 35
+    return total + (parseFloat(h.quantity) * price)
+  }, 0)
 })
 
-const totalPortfolioValueUSD = computed(() => {
-  return activeHoldings.value.reduce((total, holding) => total + (parseFloat(holding.costBasis) || 0), 0)
+const totalCostBasis = computed(() => {
+  return activeHoldings.value.reduce((total, h) => {
+    let cost = parseFloat(h.costBasis) || 0
+    if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 35
+    return total + cost
+  }, 0)
+})
+
+const activeHoldings = computed(() => {
+  return holdings.value.filter(h => parseFloat(String(h.quantity)) > 0)
 })
 
 // Interface for MarketQuote
@@ -319,9 +332,10 @@ watch(activeHoldings, async (newHoldings) => {
   try {
     const promises = newHoldings.map(async (h) => {
       try {
-        const res = await $fetch<{ data: MarketQuote }>(
+        const res = await $fetch<any>(
           `/api/market/quotes/${h.assetSymbol}`
         )
+        if (!res.success) throw new Error('API returned success: false')
         return { symbol: h.assetSymbol, quote: res.data }
       } catch {
         return { symbol: h.assetSymbol, quote: null }
@@ -338,24 +352,13 @@ watch(activeHoldings, async (newHoldings) => {
   }
 }, { deep: true, immediate: true })
 
-const currentTotalPortfolioValueUSD = computed(() => {
-  if (Object.keys(currentQuotes.value).length === 0) return totalPortfolioValueUSD.value
-  let total = 0
-  for (const h of activeHoldings.value) {
-    const priceStr = currentQuotes.value[h.assetSymbol]?.price
-    const price = priceStr ? parseFloat(priceStr) : (parseFloat(h.quantity) > 0 ? parseFloat(h.costBasis) / parseFloat(h.quantity) : 0)
-    total += parseFloat(h.quantity) * price
-  }
-  return total
-})
-
 const totalProfitLoss = computed(() => {
-  return currentTotalPortfolioValueUSD.value - totalPortfolioValueUSD.value
+  return totalPortfolioValue.value - totalCostBasis.value
 })
 
 const totalProfitLossPercent = computed(() => {
-  if (totalPortfolioValueUSD.value === 0) return 0
-  return (totalProfitLoss.value / totalPortfolioValueUSD.value) * 100
+  if (totalCostBasis.value === 0) return 0
+  return (totalProfitLoss.value / totalCostBasis.value) * 100
 })
 
 const getAssetProfitLoss = (holding: any) => {
@@ -398,7 +401,11 @@ const chartData = computed(() => {
     datasets: [
       {
         backgroundColor: activeHoldings.value.map(h => getAssetColor(h.assetSymbol)),
-        data: activeHoldings.value.map(h => parseFloat(h.costBasis)),
+        data: activeHoldings.value.map(h => {
+          let val = parseFloat(h.costBasis)
+          if (h.assetSymbol.startsWith('THAIGOLD')) val = val / 35
+          return val
+        }),
         borderWidth: 0,
         hoverOffset: 4
       }
@@ -467,11 +474,16 @@ const onTransactionSuccess = () => {
   // Can add toast notification here later
 }
 
-const formatCurrency = (val: string, currency?: string) => {
-  const num = parseFloat(val)
-  if (isNaN(num)) return val
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+const formatCurrency = (val: string | number, currency?: string) => {
+  const num = typeof val === 'string' ? parseFloat(val) : val
+  if (isNaN(num)) return String(val)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(
     num
   )
+}
+
+const toTHB = (symbol: string, value: number) => {
+  if (symbol.startsWith('THAIGOLD')) return value
+  return value * 35
 }
 </script>

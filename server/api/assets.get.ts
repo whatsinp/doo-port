@@ -8,10 +8,13 @@ export default defineEventHandler(async (event) => {
       stocks: [],
       crypto: [],
       gold: null,
+      thaiGold: [],
       updatedAt: new Date().toISOString(),
       errors: []
     }
   }
+
+  const marketProvider = new RealMarketProvider()
 
   // Pre-defined mapping for popular crypto
   const CRYPTO_MAP: Record<string, string> = {
@@ -28,11 +31,14 @@ export default defineEventHandler(async (event) => {
 
   const stocksToFetch: string[] = []
   const cryptoToFetch: { symbol: string, id: string }[] = []
+  const thaiGoldToFetch: string[] = []
   let fetchGold = false
 
   for (const sym of symbols) {
     if (sym === 'XAU' || sym === 'GOLD') {
       fetchGold = true
+    } else if (sym.startsWith('THAIGOLD')) {
+      thaiGoldToFetch.push(sym)
     } else if (CRYPTO_MAP[sym]) {
       cryptoToFetch.push({ symbol: sym, id: CRYPTO_MAP[sym] })
     } else {
@@ -57,12 +63,18 @@ export default defineEventHandler(async (event) => {
     promises.push(fetchGoldPrice().then(data => ({ type: 'gold', data })))
   }
 
+  // Add thai gold promises
+  for (const sym of thaiGoldToFetch) {
+    promises.push(marketProvider.getQuote(sym).then(data => ({ type: 'thaiGold', data })))
+  }
+
   const results = await Promise.allSettled(promises)
 
   const response = {
     stocks: [] as any[],
     crypto: [] as any[],
     gold: null as any,
+    thaiGold: [] as any[],
     updatedAt: new Date().toISOString(),
     errors: [] as string[]
   }
@@ -73,6 +85,7 @@ export default defineEventHandler(async (event) => {
       if (type === 'stock') response.stocks.push(data)
       else if (type === 'crypto') response.crypto.push(data)
       else if (type === 'gold') response.gold = data
+      else if (type === 'thaiGold') response.thaiGold.push(data)
     } else {
       console.error('Provider error:', res.reason)
       response.errors.push(res.reason?.message || String(res.reason))

@@ -6,7 +6,7 @@
     </div>
 
     <div v-if="loading" class="flex justify-center p-8">
-      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"/>
     </div>
 
     <div v-else-if="profile" class="bg-white dark:bg-gray-800 shadow rounded-lg">

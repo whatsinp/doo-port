@@ -43,7 +43,7 @@
             <Password
               id="new-password"
               v-model="newPassword"
-              toggleMask
+              toggle-mask
               required
               class="w-full custom-password"
               placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)"
@@ -54,7 +54,7 @@
             <Password
               id="confirm-password"
               v-model="confirmPassword"
-              toggleMask
+              toggle-mask
               :feedback="false"
               required
               class="w-full custom-password"

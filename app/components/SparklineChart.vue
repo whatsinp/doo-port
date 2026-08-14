@@ -6,11 +6,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, onUnmounted } from 'vue'
-import { createChart, IChartApi, ISeriesApi, ColorType, LineSeries } from 'lightweight-charts'
+import { createChart, ColorType, LineSeries } from 'lightweight-charts'
+import type { IChartApi, ISeriesApi, Time } from 'lightweight-charts'
 import { useWindowSize } from '@vueuse/core'
 
 const props = defineProps<{
-  data: { time: number; value: number }[]
+  data: any[]
   color?: string
 }>()
 

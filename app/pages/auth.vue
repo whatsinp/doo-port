@@ -2,18 +2,9 @@
   <div
     class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 overflow-hidden relative"
   >
-    <!-- Background Decor -->
-    <div
-      class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400/30 rounded-full blur-3xl mix-blend-multiply opacity-50 animate-blob"
-    ></div>
-    <div
-      class="absolute top-[20%] right-[-10%] w-96 h-96 bg-purple-400/30 rounded-full blur-3xl mix-blend-multiply opacity-50 animate-blob animation-delay-2000"
-    ></div>
-    <div
-      class="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-emerald-400/30 rounded-full blur-3xl mix-blend-multiply opacity-50 animate-blob animation-delay-4000"
-    ></div>
 
-    <div class="w-full max-w-md h-[720px] perspective-1000 z-10">
+
+    <div class="w-full max-w-md h-[580px] perspective-1000 z-10">
       <div
         class="w-full h-full relative transition-transform duration-700 ease-in-out preserve-3d"
         :class="{ 'rotate-y-180': isRegister }"
@@ -26,7 +17,7 @@
             <div
               class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 text-white mb-4 shadow-lg shadow-blue-500/30"
             >
-              <i class="pi pi-bolt text-3xl"></i>
+              <i class="pi pi-bolt text-3xl"/>
             </div>
             <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">ยินดีต้อนรับกลับมา</h2>
             <p class="text-gray-500 dark:text-gray-400 mt-2">เข้าสู่ระบบเพื่อดำเนินการต่อใน Doo-Port</p>
@@ -51,7 +42,7 @@
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    ></path>
+                    />
                   </svg>
                 </span>
                 <input
@@ -61,7 +52,7 @@
                   autocomplete="off"
                   placeholder="อีเมล"
                   class="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-                />
+                >
               </div>
 
               <!-- Password Input -->
@@ -81,13 +72,13 @@
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    ></path>
+                    />
                   </svg>
                 </span>
                 <Password
                   v-model="loginPassword"
                   :feedback="false"
-                  toggleMask
+                  toggle-mask
                   autocomplete="new-password"
                   class="w-full custom-password"
                   placeholder="รหัสผ่าน"
@@ -109,7 +100,7 @@
               :disabled="loginLoading"
               class="w-full py-3.5 rounded-xl text-white font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <i v-if="loginLoading" class="pi pi-spinner pi-spin"></i>
+              <i v-if="loginLoading" class="pi pi-spinner pi-spin"/>
               {{ loginLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
             </button>
           </form>
@@ -118,8 +109,8 @@
             <span class="text-sm text-gray-600 dark:text-gray-400">ยังไม่มีบัญชีผู้ใช้? </span>
             <button
               type="button"
-              @click="toggleMode"
               class="text-sm font-bold text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors"
+              @click="toggleMode"
             >
               สร้างบัญชีเลย
             </button>
@@ -134,7 +125,7 @@
             <div
               class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white mb-4 shadow-lg shadow-emerald-500/30"
             >
-              <i class="pi pi-user-plus text-3xl"></i>
+              <i class="pi pi-user-plus text-3xl"/>
             </div>
             <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">สร้างบัญชีใหม่</h2>
             <p class="text-gray-500 dark:text-gray-400 mt-2">เข้าร่วม Doo-Port เพื่อติดตามสินทรัพย์ของคุณ</p>
@@ -143,42 +134,17 @@
           <form class="space-y-4" @submit.prevent="handleRegister">
             <div class="space-y-4">
               <!-- Avatar Upload -->
-              <div class="flex justify-center mb-2">
-                <div class="relative group">
-                  <img
-                    v-if="registerAvatarPreview"
-                    :src="registerAvatarPreview"
-                    alt="Avatar"
-                    class="h-20 w-20 rounded-full object-cover border-2 border-emerald-200 dark:border-emerald-700/50 shadow-sm"
-                  />
-                  <div
-                    v-else
-                    class="h-20 w-20 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500 dark:text-emerald-400 border-2 border-dashed border-emerald-200 dark:border-emerald-700/50 group-hover:border-emerald-400 transition-colors shadow-sm"
-                  >
-                    <i class="pi pi-camera text-2xl"></i>
-                  </div>
-                  <label
-                    for="register-avatar"
-                    class="absolute inset-0 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity backdrop-blur-sm"
-                  >
-                    <i class="pi pi-upload text-xl"></i>
-                  </label>
-                  <input
-                    id="register-avatar"
-                    type="file"
-                    accept="image/*"
-                    class="hidden"
-                    @change="handleRegisterAvatar"
-                  />
-                </div>
-              </div>
+              <!-- 
+                DISABLED_IMAGE_UPLOAD
+                <div class="flex justify-center mb-2"> ... Avatar Upload UI ... </div> 
+              -->
 
               <!-- Nickname Input -->
               <div class="relative group">
                 <span
                   class="absolute inset-y-0 left-0 flex items-center pl-4 z-20 pointer-events-none text-gray-400 group-focus-within:text-emerald-500 transition-colors"
                 >
-                  <i class="pi pi-id-card text-lg"></i>
+                  <i class="pi pi-id-card text-lg"/>
                 </span>
                 <input
                   v-model="registerNickname"
@@ -186,7 +152,7 @@
                   autocomplete="off"
                   placeholder="ชื่อเล่น (ไม่บังคับ)"
                   class="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
-                />
+                >
               </div>
 
               <!-- Email Input -->
@@ -206,7 +172,7 @@
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    ></path>
+                    />
                   </svg>
                 </span>
                 <input
@@ -216,7 +182,7 @@
                   autocomplete="off"
                   placeholder="อีเมล"
                   class="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
-                />
+                >
               </div>
 
               <!-- Password Input -->
@@ -236,12 +202,12 @@
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    ></path>
+                    />
                   </svg>
                 </span>
                 <Password
                   v-model="registerPassword"
-                  toggleMask
+                  toggle-mask
                   autocomplete="new-password"
                   class="w-full custom-password custom-password-emerald"
                   placeholder="รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)"
@@ -254,7 +220,7 @@
               :disabled="registerLoading"
               class="w-full py-3.5 rounded-xl text-white font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 focus:ring-4 focus:ring-emerald-500/30 transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <i v-if="registerLoading" class="pi pi-spinner pi-spin"></i>
+              <i v-if="registerLoading" class="pi pi-spinner pi-spin"/>
               {{ registerLoading ? 'กำลังสร้างบัญชี...' : 'สมัครสมาชิก' }}
             </button>
           </form>
@@ -263,8 +229,8 @@
             <span class="text-sm text-gray-600 dark:text-gray-400">มีบัญชีผู้ใช้อยู่แล้ว? </span>
             <button
               type="button"
-              @click="toggleMode"
               class="text-sm font-bold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 transition-colors"
+              @click="toggleMode"
             >
               เข้าสู่ระบบแทน
             </button>
@@ -375,6 +341,7 @@ const handleRegister = async () => {
       profileUpdates.nickname = registerNickname.value
     }
 
+    /* DISABLED_IMAGE_UPLOAD
     if (registerAvatarFile.value) {
       const fileExt = registerAvatarFile.value.name.split('.').pop()
       const fileName = `avatars/${user.uid}-${Date.now()}.${fileExt}`
@@ -382,6 +349,7 @@ const handleRegister = async () => {
       await uploadBytes(sRef, registerAvatarFile.value)
       profileUpdates.avatarUrl = await getDownloadURL(sRef)
     }
+    */
 
     const docRef = doc($db, 'users', user.uid)
     await setDoc(docRef, profileUpdates, { merge: true })
@@ -477,30 +445,7 @@ const handleRegister = async () => {
   border-color: rgb(16 185 129) !important;
 }
 
-/* Blob Animations */
-@keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-}
-.animate-blob {
-  animation: blob 7s infinite;
-}
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
+
 
 /* Chrome Autofill Overrides */
 input:-webkit-autofill,

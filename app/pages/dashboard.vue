@@ -13,7 +13,7 @@
     </div>
 
     <div v-if="loading" class="flex justify-center p-12">
-      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"/>
     </div>
 
     <div v-else class="space-y-6">
@@ -36,10 +36,8 @@
 
         <!-- Current Value -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
-          <div v-if="loadingPrices" class="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm flex items-center justify-center z-10">
-            <i class="pi pi-spin pi-spinner text-xl text-blue-500"></i>
-          </div>
-          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">มูลค่าปัจจุบัน</p>
+
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">มูลค่าสินทรัพย์</p>
           <div class="flex flex-col mt-1">
             <p class="text-3xl font-bold text-gray-900 dark:text-white flex items-baseline gap-2">
               {{ formatCurrency(currentTotalValue) }} <span class="text-xl font-bold text-gray-500 dark:text-gray-400">USD</span>
@@ -49,13 +47,13 @@
             </p>
           </div>
           <div class="text-xs text-gray-400 mt-1 flex items-center gap-1">
-            <i class="pi pi-bolt text-yellow-500"></i> อัปเดตราคาล่าสุด (Real-time)
+            <i class="pi pi-bolt text-yellow-500"/> อัปเดตราคาล่าสุด (Real-time)
           </div>
         </div>
 
         <!-- Total Return (P/L) -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
-          <div v-if="loadingPrices" class="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm flex items-center justify-center z-10"></div>
+
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">กำไร / ขาดทุน (P/L)</p>
           <div class="flex flex-col mt-1">
             <p class="text-3xl font-bold flex items-baseline gap-2" :class="totalProfitLoss >= 0 ? 'text-green-500' : 'text-rose-500'">
@@ -67,8 +65,8 @@
             </p>
           </div>
           <div class="text-sm font-medium mt-1" :class="totalProfitLoss >= 0 ? 'text-green-500' : 'text-rose-500'">
-            <i :class="totalProfitLoss >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i> 
-            {{ totalProfitLossPercent.toFixed(2) }}%
+            <i :class="totalProfitLoss >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"/> 
+            {{ Number(totalProfitLossPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
           </div>
         </div>
       </div>
@@ -104,41 +102,39 @@
                   <th scope="col" class="px-6 py-3 font-semibold text-right">ต้นทุนรวม</th>
                   <th scope="col" class="px-6 py-3 font-semibold text-right">ต้นทุนเฉลี่ย</th>
                   <th scope="col" class="px-6 py-3 font-semibold text-right">ราคาปัจจุบัน</th>
-                  <th scope="col" class="px-6 py-3 font-semibold text-right">มูลค่าปัจจุบัน</th>
+                  <th scope="col" class="px-6 py-3 font-semibold text-right">มูลค่าสินทรัพย์</th>
                   <th scope="col" class="px-6 py-3 font-semibold text-right">P/L</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                <tr v-for="h in aggregatedHoldings" :key="h.symbol" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <tr v-for="h in sortedHoldings" :key="h.symbol" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">
                     <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold shadow-sm" :style="{ backgroundColor: getAssetColor(h.symbol) }">
-                        {{ h.symbol.charAt(0) }}
-                      </div>
+                      <AssetLogo :symbol="h.symbol" class="w-8 h-8 rounded-full" />
                       {{ h.symbol }}
                     </div>
                   </td>
                   <td class="px-6 py-4 text-right font-medium text-gray-600 dark:text-gray-300">
-                    {{ h.quantity }}
+                    {{ Number(h.quantity).toLocaleString('en-US', { maximumFractionDigits: 6 }) }}
                   </td>
                   <td class="px-6 py-4 text-right font-medium text-gray-600 dark:text-gray-300">
-                    {{ formatCurrency(h.costBasis) }}
+                    {{ formatCurrency(toUSD(h.symbol, h.costBasis)) }}
                   </td>
                   <td class="px-6 py-4 text-right font-medium text-gray-600 dark:text-gray-300">
-                    {{ formatCurrency(h.costBasis / h.quantity) }}
+                    {{ formatCurrency(toUSD(h.symbol, h.costBasis / h.quantity)) }}
                   </td>
                   <td class="px-6 py-4 text-right font-medium text-gray-900 dark:text-white">
-                    <div v-if="loadingPrices"><i class="pi pi-spinner pi-spin text-gray-400"></i></div>
-                    <div v-else>{{ formatCurrency(currentPrices[h.symbol] || (h.costBasis / h.quantity)) }}</div>
+                    <div v-if="loadingPrices"><i class="pi pi-spinner pi-spin text-gray-400"/></div>
+                    <div v-else>{{ formatCurrency(toUSD(h.symbol, currentPrices[h.symbol] || (h.costBasis / h.quantity))) }}</div>
                   </td>
                   <td class="px-6 py-4 text-right font-medium text-gray-900 dark:text-white">
-                    <div v-if="loadingPrices"><i class="pi pi-spinner pi-spin text-gray-400"></i></div>
-                    <div v-else>{{ formatCurrency(h.quantity * (currentPrices[h.symbol] || (h.costBasis / h.quantity))) }}</div>
+                    <div v-if="loadingPrices"><i class="pi pi-spinner pi-spin text-gray-400"/></div>
+                    <div v-else>{{ formatCurrency(toUSD(h.symbol, h.quantity * (currentPrices[h.symbol] || (h.costBasis / h.quantity)))) }}</div>
                   </td>
                   <td class="px-6 py-4 text-right font-bold" :class="getProfitLoss(h) >= 0 ? 'text-green-500' : 'text-rose-500'">
-                    <div v-if="loadingPrices"><i class="pi pi-spinner pi-spin text-gray-400"></i></div>
+                    <div v-if="loadingPrices"><i class="pi pi-spinner pi-spin text-gray-400"/></div>
                     <div v-else>
-                      {{ getProfitLoss(h) >= 0 ? '+' : '' }}{{ formatCurrency(getProfitLoss(h)) }}
+                      {{ getProfitLoss(h) >= 0 ? '+' : '' }}{{ formatCurrency(toUSD(h.symbol, getProfitLoss(h))) }}
                     </div>
                   </td>
                 </tr>
@@ -163,9 +159,21 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 const { aggregatedHoldings, loading, totalCostBasis, currentPrices, loadingPrices, currentTotalValue } = useDashboard()
 const { profile } = useProfile()
 
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val)
+const formatCurrency = (val: number, currency: string = 'USD') => {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(val)
 }
+
+const toUSD = (symbol: string, value: number) => {
+  return symbol.startsWith('THAIGOLD') ? value / 35 : value
+}
+
+const sortedHoldings = computed(() => {
+  return [...aggregatedHoldings.value].sort((a, b) => {
+    const valA = toUSD(a.symbol, a.quantity * (currentPrices.value[a.symbol] || (a.costBasis / a.quantity)))
+    const valB = toUSD(b.symbol, b.quantity * (currentPrices.value[b.symbol] || (b.costBasis / b.quantity)))
+    return valB - valA
+  })
+})
 
 const totalProfitLoss = computed(() => {
   if (totalCostBasis.value === 0) return 0
@@ -204,7 +212,8 @@ const chartData = computed(() => {
         backgroundColor: aggregatedHoldings.value.map(h => getAssetColor(h.symbol)),
         data: aggregatedHoldings.value.map(h => {
           // Use current value for allocation if available, else fallback to cost basis
-          const price = currentPrices.value[h.symbol] || (h.quantity > 0 ? h.costBasis / h.quantity : 0)
+          let price = currentPrices.value[h.symbol] || (h.quantity > 0 ? h.costBasis / h.quantity : 0)
+          if (h.symbol.startsWith('THAIGOLD')) price = price / 35
           return h.quantity * price
         }),
         borderWidth: 0,

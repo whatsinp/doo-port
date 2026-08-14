@@ -1,5 +1,5 @@
 <template>
-  <div class="relative" ref="dropdownRef">
+  <div ref="dropdownRef" class="relative">
     <div
       class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent cursor-pointer transition-all flex items-center justify-between"
       @click="isOpen = !isOpen"
@@ -8,7 +8,7 @@
       <i
         class="pi pi-chevron-down text-gray-500 dark:text-gray-400 transition-transform duration-300 ml-4"
         :class="{ 'rotate-180': isOpen }"
-      ></i>
+      />
     </div>
 
     <!-- Dropdown Options -->
@@ -27,13 +27,13 @@
         <div
           v-for="option in options"
           :key="option.value"
-          @click="selectOption(option)"
           class="px-4 py-3 cursor-pointer select-none transition-colors"
           :class="
             modelValue === option.value
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium'
               : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
           "
+          @click="selectOption(option)"
         >
           {{ option.label }}
         </div>

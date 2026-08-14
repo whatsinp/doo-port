@@ -6,17 +6,17 @@
         <p class="text-gray-500 dark:text-gray-400">จัดการพอร์ตการลงทุนของคุณ</p>
       </div>
       <button
-        @click="openCreateDialog"
         class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+        @click="openCreateDialog"
       >
-        <i class="pi pi-plus"></i>
+        <i class="pi pi-plus"/>
         <span>สร้างพอร์ตใหม่</span>
       </button>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading || loadingHoldings" class="flex justify-center p-12">
-      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"/>
     </div>
 
     <!-- Empty State -->
@@ -24,16 +24,16 @@
       v-else-if="portfolios.length === 0"
       class="bg-white dark:bg-gray-800 p-12 text-center rounded-xl shadow border border-gray-200 dark:border-gray-700"
     >
-      <i class="pi pi-folder-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+      <i class="pi pi-folder-open text-6xl text-gray-300 dark:text-gray-600 mb-4"/>
       <h3 class="text-lg font-medium text-gray-900 dark:text-white">ยังไม่มีพอร์ตการลงทุน</h3>
       <p class="mt-1 mb-20 text-gray-500 dark:text-gray-400">
         สร้างพอร์ตการลงทุนแรกของคุณเพื่อเริ่มต้นติดตามการลงทุน
       </p>
       <button
-        @click="openCreateDialog"
         class="flex items-center justify-center gap-2 px-5 py-2.5 mx-auto bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm"
+        @click="openCreateDialog"
       >
-        <i class="pi pi-plus"></i>
+        <i class="pi pi-plus"/>
         <span>สร้างพอร์ตการลงทุน</span>
       </button>
     </div>
@@ -48,7 +48,7 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-xl font-bold">พอร์ตรวม</h3>
-              <i class="pi pi-globe text-2xl opacity-75"></i>
+              <i class="pi pi-globe text-2xl opacity-75"/>
             </div>
             <p class="text-blue-100 text-sm mb-6">ดูภาพรวมการลงทุนทั้งหมดของคุณจากทุกพอร์ตในที่เดียว</p>
           </div>
@@ -63,8 +63,8 @@
               ≈ {{ formatCurrency(totalAllPortfoliosTHB, 'THB') }}
             </div>
             <div class="text-sm font-bold flex items-center gap-1 mt-2" :class="allPortfoliosPL.isProfit ? 'text-green-300' : 'text-rose-300'">
-               <i :class="allPortfoliosPL.isProfit ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"></i>
-               P/L: {{ allPortfoliosPL.pl >= 0 ? '+' : '' }}{{ formatCurrency(String(allPortfoliosPL.pl), 'USD') }} ({{ allPortfoliosPL.plPercent.toFixed(2) }}%)
+               <i :class="allPortfoliosPL.isProfit ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"/>
+               P/L: {{ allPortfoliosPL.pl >= 0 ? '+' : '' }}{{ formatCurrency(String(allPortfoliosPL.pl), 'USD') }} ({{ Number(allPortfoliosPL.plPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%)
             </div>
             <div class="text-xs font-medium opacity-75 mt-3 pt-3 border-t border-white/20">
               รวมทั้งหมด {{ portfolios.length }} พอร์ต
@@ -85,17 +85,17 @@
             <div class="flex items-center gap-1 shrink-0">
               <button
                 aria-label="Edit"
-                @click="openEditDialog(p)"
                 class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors flex items-center justify-center"
+                @click="openEditDialog(p)"
               >
-                <i class="pi pi-pencil text-sm"></i>
+                <i class="pi pi-pencil text-sm"/>
               </button>
               <button
                 aria-label="Delete"
-                @click="confirmDelete(p.id)"
                 class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full transition-colors flex items-center justify-center"
+                @click="confirmDelete(p.id)"
               >
-                <i class="pi pi-trash text-sm"></i>
+                <i class="pi pi-trash text-sm"/>
               </button>
             </div>
           </div>
@@ -106,12 +106,12 @@
           <div class="bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg mb-5 border border-gray-100 dark:border-gray-700">
              <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                มูลค่าพอร์ต
-               <i v-if="loadingPrices" class="pi pi-spin pi-spinner text-blue-500"></i>
+               <i v-if="loadingPrices" class="pi pi-spin pi-spinner text-blue-500"/>
              </div>
              <div class="text-lg font-bold transition-colors flex items-baseline gap-1 flex-wrap" :class="getPortfolioPL(p.id).isProfit ? 'text-green-600 dark:text-green-400' : 'text-rose-600 dark:text-rose-400'">
                {{ formatCurrency(getPortfolioValueUSD(p.id), 'USD') }}
                <span class="text-[13px] font-bold">
-                 ({{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ formatCurrency(String(getPortfolioPL(p.id).pl), 'USD') }} ({{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ getPortfolioPL(p.id).plPercent.toFixed(2) }}%))
+                 ({{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ formatCurrency(String(getPortfolioPL(p.id).pl), 'USD') }} ({{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ Number(getPortfolioPL(p.id).plPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%))
                </span>
              </div>
              <div class="text-xs font-medium text-gray-500 mt-0.5">
@@ -161,19 +161,19 @@
               class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50"
             >
               <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <i :class="editMode ? 'pi pi-pencil text-blue-500' : 'pi pi-folder-plus text-blue-500'"></i> 
+                <i :class="editMode ? 'pi pi-pencil text-blue-500' : 'pi pi-folder-plus text-blue-500'"/> 
                 {{ editMode ? 'แก้ไขพอร์ตการลงทุน' : 'สร้างพอร์ตการลงทุน' }}
               </h2>
               <button
-                @click="showDialog = false"
                 class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                @click="showDialog = false"
               >
-                <i class="pi pi-times"></i>
+                <i class="pi pi-times"/>
               </button>
             </div>
 
             <!-- Modal Body -->
-            <form @submit.prevent="handleSave" class="p-6">
+            <form class="p-6" @submit.prevent="handleSave">
               <div class="mb-5">
                 <label
                   for="portfolioName"
@@ -189,7 +189,7 @@
                   placeholder="เช่น กองทุนเกษียณ, พอร์ตคริปโต"
                   class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-500"
                   autofocus
-                />
+                >
               </div>
 
               <div class="mb-6">
@@ -205,15 +205,15 @@
                   rows="3"
                   placeholder="รายละเอียดเพิ่มเติมเกี่ยวกับพอร์ตนี้..."
                   class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-500 resize-none"
-                ></textarea>
+                />
               </div>
 
               <!-- Modal Footer -->
               <div class="flex justify-end gap-3 mt-8">
                 <button
                   type="button"
-                  @click="showDialog = false"
                   class="px-5 py-2.5 rounded-xl font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 dark:focus:ring-gray-700 transition-colors"
+                  @click="showDialog = false"
                 >
                   ยกเลิก
                 </button>
@@ -222,7 +222,7 @@
                   :disabled="saving || !form.name.trim()"
                   class="px-5 py-2.5 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-blue-500/20 flex items-center gap-2"
                 >
-                  <i v-if="saving" class="pi pi-spinner pi-spin"></i>
+                  <i v-if="saving" class="pi pi-spinner pi-spin"/>
                   <span>{{ saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล' }}</span>
                 </button>
               </div>
@@ -297,7 +297,7 @@ const formatCurrency = (value: number | string, currency?: string) => {
   const num = typeof value === 'string' ? parseFloat(value) : value
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: currency || 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(num || 0)
@@ -305,14 +305,19 @@ const formatCurrency = (value: number | string, currency?: string) => {
 
 const getPortfolioValueUSD = (portfolioId: string) => {
   const portsHoldings = allHoldings.value.filter(h => h.portfolioId === portfolioId && parseFloat(h.quantity) > 0)
-  if (Object.keys(currentPrices.value).length === 0) {
-    return portsHoldings.reduce((total, h) => total + (parseFloat(h.costBasis) || 0), 0)
-  }
+  if (portsHoldings.length === 0) return 0
+  
   let total = 0
   for (const h of portsHoldings) {
     const qty = parseFloat(h.quantity)
     const cost = parseFloat(h.costBasis)
-    const price = currentPrices.value[h.assetSymbol] || (qty > 0 ? cost / qty : 0)
+    let price = 0
+    if (currentPrices.value[h.assetSymbol]) {
+      price = currentPrices.value[h.assetSymbol]
+      if (h.assetSymbol.startsWith('THAIGOLD')) price = price / 35
+    } else {
+      price = qty > 0 ? (h.assetSymbol.startsWith('THAIGOLD') ? cost / 35 / qty : cost / qty) : 0
+    }
     total += qty * price
   }
   return total
@@ -321,7 +326,11 @@ const getPortfolioValueUSD = (portfolioId: string) => {
 const getPortfolioCostUSD = (portfolioId: string) => {
   return allHoldings.value
     .filter(h => h.portfolioId === portfolioId && parseFloat(h.quantity) > 0)
-    .reduce((total, h) => total + (parseFloat(h.costBasis) || 0), 0)
+    .reduce((total, h) => {
+      let cost = parseFloat(h.costBasis) || 0
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 35
+      return total + cost
+    }, 0)
 }
 
 const getPortfolioPL = (portfolioId: string) => {
@@ -338,13 +347,21 @@ const totalAllPortfoliosUSD = computed(() => {
   }
   return allHoldings.value
     .filter(h => parseFloat(h.quantity) > 0)
-    .reduce((total, h) => total + (parseFloat(h.costBasis) || 0), 0)
+    .reduce((total, h) => {
+      let cost = parseFloat(h.costBasis) || 0
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 35
+      return total + cost
+    }, 0)
 })
 
 const totalAllPortfoliosCostUSD = computed(() => {
   return allHoldings.value
     .filter(h => parseFloat(h.quantity) > 0)
-    .reduce((total, h) => total + (parseFloat(h.costBasis) || 0), 0)
+    .reduce((total, h) => {
+      let cost = parseFloat(h.costBasis) || 0
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 35
+      return total + cost
+    }, 0)
 })
 
 const allPortfoliosPL = computed(() => {

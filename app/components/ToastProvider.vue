@@ -21,15 +21,15 @@
         ]"
       >
         <!-- Glassmorphism shine effect -->
-        <div class="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity"/>
         
         <div class="flex items-start gap-3 relative z-10">
           <!-- Icons -->
           <div class="flex-shrink-0 mt-0.5">
-            <i v-if="toast.type === 'error'" class="pi pi-times-circle text-xl"></i>
-            <i v-else-if="toast.type === 'success'" class="pi pi-check-circle text-xl"></i>
-            <i v-else-if="toast.type === 'warning'" class="pi pi-exclamation-triangle text-xl"></i>
-            <i v-else class="pi pi-info-circle text-xl"></i>
+            <i v-if="toast.type === 'error'" class="pi pi-times-circle text-xl"/>
+            <i v-else-if="toast.type === 'success'" class="pi pi-check-circle text-xl"/>
+            <i v-else-if="toast.type === 'warning'" class="pi pi-exclamation-triangle text-xl"/>
+            <i v-else class="pi pi-info-circle text-xl"/>
           </div>
           
           <div class="flex-1">
@@ -38,10 +38,10 @@
           </div>
           
           <button
-            @click="removeToast(toast.id)"
             class="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-black/10"
+            @click="removeToast(toast.id)"
           >
-            <i class="pi pi-times text-sm"></i>
+            <i class="pi pi-times text-sm"/>
           </button>
         </div>
       </div>

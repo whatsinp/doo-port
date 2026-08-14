@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -11,7 +10,8 @@ import {
   updatePassword,
   confirmPasswordReset
 } from 'firebase/auth'
-import type { User, ActionCodeSettings } from 'firebase/auth'
+import type { User, ActionCodeSettings ,
+  getAuth} from 'firebase/auth'
 import { useNuxtApp } from '#app'
 
 export const useAuth = () => {
