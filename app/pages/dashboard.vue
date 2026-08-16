@@ -29,7 +29,7 @@
               {{ formatCurrency(totalCostBasis) }} <span class="text-xl font-bold text-gray-500 dark:text-gray-400">USD</span>
             </p>
             <p class="text-sm font-medium text-gray-400 mt-1">
-              ≈ ฿{{ (totalCostBasis * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
+              ≈ ฿{{ (totalCostBasis * 33.07).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
             </p>
           </div>
         </div>
@@ -43,7 +43,7 @@
               {{ formatCurrency(currentTotalValue) }} <span class="text-xl font-bold text-gray-500 dark:text-gray-400">USD</span>
             </p>
             <p class="text-sm font-medium text-gray-400 mt-1">
-              ≈ ฿{{ (currentTotalValue * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
+              ≈ ฿{{ (currentTotalValue * 33.07).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
             </p>
           </div>
           <div class="text-xs text-gray-400 mt-1 flex items-center gap-1">
@@ -61,7 +61,7 @@
               <span class="text-xl font-bold" :class="totalProfitLoss >= 0 ? 'text-green-600/70' : 'text-rose-600/70'">USD</span>
             </p>
             <p class="text-sm font-medium mt-1" :class="totalProfitLoss >= 0 ? 'text-green-500 dark:text-green-400' : 'text-rose-500 dark:text-rose-400'">
-              ≈ {{ totalProfitLoss >= 0 ? '+' : '' }}฿{{ (Math.abs(totalProfitLoss) * 35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
+              ≈ {{ totalProfitLoss >= 0 ? '+' : '' }}฿{{ (Math.abs(totalProfitLoss) * 33.07).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
             </p>
           </div>
           <div class="text-sm font-medium mt-1" :class="totalProfitLoss >= 0 ? 'text-green-500' : 'text-rose-500'">
@@ -164,7 +164,7 @@ const formatCurrency = (val: number, currency: string = 'USD') => {
 }
 
 const toUSD = (symbol: string, value: number) => {
-  return symbol.startsWith('THAIGOLD') ? value / 35 : value
+  return symbol.startsWith('THAIGOLD') ? value / 33.07 : value
 }
 
 const sortedHoldings = computed(() => {
@@ -213,7 +213,7 @@ const chartData = computed(() => {
         data: aggregatedHoldings.value.map(h => {
           // Use current value for allocation if available, else fallback to cost basis
           let price = currentPrices.value[h.symbol] || (h.quantity > 0 ? h.costBasis / h.quantity : 0)
-          if (h.symbol.startsWith('THAIGOLD')) price = price / 35
+          if (h.symbol.startsWith('THAIGOLD')) price = price / 33.07
           return h.quantity * price
         }),
         borderWidth: 0,

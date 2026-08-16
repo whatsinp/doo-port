@@ -7,7 +7,9 @@ import {
   doc,
   setDoc,
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
+  writeBatch,
+  getDocs
 } from 'firebase/firestore'
 import { useNuxtApp } from '#app'
 import { useAuth } from '~/features/auth/composables/useAuth'
@@ -18,6 +20,7 @@ export interface Portfolio {
   userId: string
   name: string
   description?: string
+  order?: number
   createdAt: any
 }
 
@@ -43,8 +46,13 @@ export const usePortfolios = () => {
         snapshot.forEach((docSnap) => {
           results.push({ id: docSnap.id, ...docSnap.data() } as Portfolio)
         })
-        // Sort by creation date or name client-side to save on indexing for MVP
-        portfolios.value = results.sort((a, b) => a.name.localeCompare(b.name))
+        // Sort by order first, then by name
+        portfolios.value = results.sort((a, b) => {
+          const orderA = a.order ?? 9999
+          const orderB = b.order ?? 9999
+          if (orderA !== orderB) return orderA - orderB
+          return a.name.localeCompare(b.name)
+        })
         loading.value = false
       })
 
@@ -62,6 +70,7 @@ export const usePortfolios = () => {
       userId: user.uid,
       name,
       description,
+      order: portfolios.value.length,
       createdAt: serverTimestamp()
     })
     return id
@@ -72,10 +81,41 @@ export const usePortfolios = () => {
     await setDoc(docRef, { name, description }, { merge: true })
   }
 
-  const deletePortfolio = async (id: string) => {
-    const docRef = doc($db as any, 'portfolios', id)
-    await deleteDoc(docRef)
+  const updatePortfolioOrder = async (newOrders: { id: string, order: number }[]) => {
+    const batch = writeBatch($db as any)
+    for (const item of newOrders) {
+      const docRef = doc($db as any, 'portfolios', item.id)
+      batch.update(docRef, { order: item.order })
+    }
+    await batch.commit()
   }
 
-  return { portfolios, loading, createPortfolio, updatePortfolio, deletePortfolio }
+  const deletePortfolio = async (id: string) => {
+    // Find all holdings and transactions for this portfolio
+    const holdingsQ = query(collection($db as any, 'holdings'), where('portfolioId', '==', id))
+    const txQ = query(collection($db as any, 'transactions'), where('portfolioId', '==', id))
+    
+    const [holdingsSnap, txSnap] = await Promise.all([
+      getDocs(holdingsQ),
+      getDocs(txQ)
+    ])
+
+    const deletePromises: Promise<void>[] = []
+    
+    holdingsSnap.forEach(docSnap => {
+      deletePromises.push(deleteDoc(docSnap.ref))
+    })
+    
+    txSnap.forEach(docSnap => {
+      deletePromises.push(deleteDoc(docSnap.ref))
+    })
+
+    // Delete the portfolio document itself
+    const docRef = doc($db as any, 'portfolios', id)
+    deletePromises.push(deleteDoc(docRef))
+
+    await Promise.all(deletePromises)
+  }
+
+  return { portfolios, loading, createPortfolio, updatePortfolio, updatePortfolioOrder, deletePortfolio }
 }

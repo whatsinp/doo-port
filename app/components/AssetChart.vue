@@ -17,6 +17,7 @@ const props = defineProps<{
   data: any[]
   loading?: boolean
   color?: string
+  currency?: string
 }>()
 
 const chartContainer = ref<HTMLElement | null>(null)
@@ -34,7 +35,18 @@ watch(width, () => {
 
 const updateChartData = () => {
   if (!areaSeries || !props.data.length) return
-  areaSeries.setData(props.data)
+  
+  const priceData = props.data.map(d => {
+    if (d.value === undefined) {
+      return { time: d.time }
+    }
+    return {
+      time: d.time,
+      value: d.value
+    }
+  })
+  areaSeries.setData(priceData)
+  
   chart?.timeScale().fitContent()
 }
 
@@ -120,6 +132,13 @@ onMounted(() => {
       minMove: 0.01,
     },
   })
+
+  // We have to customize the tooltip formatter for the entire chart via timeScale or crosshair?
+  // No, lightweight-charts doesn't have a built in Intl.NumberFormat in priceFormat. 
+  // It just formats numbers. The '$' prefix is actually not added by default unless you use a custom formatter or the user saw it somewhere else?
+  // Wait! In the old code I saw:
+  // (Let me check my grep or view_file. I didn't see Intl.NumberFormat in AssetChart.vue!)
+
 
   updateChartData()
 })

@@ -162,7 +162,7 @@
                     >
                       <template v-if="!asset.error && asset.quote">
                         <div class="font-bold text-gray-900 dark:text-white text-sm">
-                          ${{ asset.quote.price }}
+                          {{ asset.quote.currency === 'THB' ? '฿' : '$' }}{{ asset.quote.price }}
                         </div>
                         <div
                           class="text-xs font-semibold"
@@ -269,10 +269,10 @@
 
                   <div class="mt-6 flex items-baseline gap-3">
                     <span class="text-4xl font-bold text-gray-900 dark:text-white">
-                      ${{ selectedAsset.price }}
+                      {{ selectedAsset.currency === 'THB' ? '฿' : '$' }}{{ selectedAsset.price }}
                     </span>
-                    <span class="text-lg text-gray-500 dark:text-gray-400 font-medium">
-                      ≈ ฿{{ (parseFloat(selectedAsset.price) * 35).toFixed(2) }}
+                    <span v-if="selectedAsset.currency !== 'THB'" class="text-lg text-gray-500 dark:text-gray-400 font-medium">
+                      ≈ ฿{{ (parseFloat(selectedAsset.price) * 33.07).toFixed(2) }}
                     </span>
                   </div>
 
@@ -323,14 +323,14 @@
                     <div class="flex flex-col">
                       <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">สูงสุดของวัน</span>
                       <span class="font-bold text-gray-900 dark:text-white"
-                        >${{ selectedAsset.dayHigh }}</span
+                        >{{ selectedAsset.currency === 'THB' ? '฿' : '$' }}{{ selectedAsset.dayHigh }}</span
                       >
                     </div>
                     <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
                     <div class="flex flex-col">
                       <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">ต่ำสุดของวัน</span>
                       <span class="font-bold text-gray-900 dark:text-white"
-                        >${{ selectedAsset.dayLow }}</span
+                        >{{ selectedAsset.currency === 'THB' ? '฿' : '$' }}{{ selectedAsset.dayLow }}</span
                       >
                     </div>
                   </div>
@@ -359,7 +359,7 @@
                 </div>
               </div>
 
-              <AssetChart :data="historicalData" :loading="loadingDetails" :color="chartColor" />
+              <AssetChart :data="historicalData" :loading="loadingDetails" :color="chartColor" :currency="selectedAsset?.currency || 'USD'" />
             </div>
           </div>
         </Transition>

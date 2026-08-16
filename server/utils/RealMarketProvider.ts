@@ -250,149 +250,145 @@ export class RealMarketProvider implements MarketProvider {
   async getHistoricalData(symbol: string, timeframe: string): Promise<any[]> {
     const sym = symbol.toUpperCase()
 
-    // 0. Thai Gold Historical (Mock fallback)
+    // 0. Thai Gold Historical (Real data derived from PAXG)
     if (sym === 'THAIGOLD' || sym === 'THAIGOLD_ORN' || sym === 'THAIGOLD_ORNAMENT') {
       try {
-        const quote = await this.getQuote(sym)
-        const currentPrice = parseFloat(quote.price)
-        return this.generateMockHistoryFromPrice(sym, currentPrice, timeframe)
+        let interval = '5m'
+        let limit = 576 // 48 hours for 1D to ensure coverage
+        if (timeframe === '5D') { interval = '1h'; limit = 120 }
+        else if (timeframe === '1M') { interval = '1d'; limit = 30 }
+        else if (timeframe === '6M') { interval = '1d'; limit = 180 }
+        else if (timeframe === '1Y' || timeframe === 'YTD') { interval = '1d'; limit = 365 }
+
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=${interval}&limit=${limit}`)
+        if (res.ok) {
+          const data = await res.json()
+          // 1 Baht Gold = 15.244 / 31.1034 oz. Current USD/THB approx 33.07
+          const multiplier = (15.244 / 31.1034) * 33.07
+          let resData = data.map((p: any) => ({
+            time: Math.floor(p[0] / 1000),
+            value: parseFloat((parseFloat(p[4]) * multiplier).toFixed(2)),
+            volume: parseFloat(p[5])
+          }))
+
+          if (timeframe === '1D') {
+            const nowSec = Math.floor(Date.now() / 1000)
+            const localSec = nowSec + 7 * 3600
+            const localMidnight = localSec - (localSec % 86400)
+            const utcMidnight = localMidnight - 7 * 3600
+            const currentHourICT = (nowSec - utcMidnight) / 3600
+
+            let startSec = utcMidnight + 9 * 3600 // 09:00 ICT
+            let endSec = startSec + 8.5 * 3600 // 17:30 ICT
+
+            if (currentHourICT < 9) {
+              startSec -= 24 * 3600
+              endSec -= 24 * 3600
+            }
+
+            resData = resData.filter((d: any) => d.time >= startSec && d.time <= endSec)
+          }
+
+          return resData
+        }
       } catch (e) {
-        return []
+        console.error('Binance gold history error:', e)
       }
+      return []
     }
 
-    // 1. Try Crypto First
+    // 1. Try Crypto
     if (CRYPTO_MAP[sym]) {
       try {
-        const id = CRYPTO_MAP[sym]
-        let days = '1'
-        if (timeframe === '5D') days = '5'
-        if (timeframe === '1M') days = '30'
-        if (timeframe === '6M') days = '180'
-        if (timeframe === '1Y' || timeframe === 'YTD') days = '365'
+        let interval = '5m'
+        let limit = 576 // 48h to ensure full coverage for 1D
+        if (timeframe === '5D') { interval = '1h'; limit = 120 }
+        else if (timeframe === '1M') { interval = '1d'; limit = 30 }
+        else if (timeframe === '6M') { interval = '1d'; limit = 180 }
+        else if (timeframe === '1Y' || timeframe === 'YTD') { interval = '1d'; limit = 365 }
 
-        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}`)
+        let binanceSym = sym
+        if (sym === 'XAU' || sym === 'GOLD') binanceSym = 'PAXG'
+
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSym}USDT&interval=${interval}&limit=${limit}`)
         if (res.ok) {
           const data = await res.json()
-          if (data && data.prices) {
-            return data.prices.map((p: any) => ({
-              time: Math.floor(p[0] / 1000), // ms to seconds
-              value: parseFloat(p[1].toFixed(2))
-            }))
+          let resData = data.map((p: any) => ({
+            time: Math.floor(p[0] / 1000),
+            value: parseFloat(parseFloat(p[4]).toFixed(2)),
+            volume: parseFloat(p[5])
+          }))
+
+          if (timeframe === '1D') {
+            const nowSec = Math.floor(Date.now() / 1000)
+            const localSec = nowSec + 7 * 3600
+            const localMidnight = localSec - (localSec % 86400)
+            const startSec = localMidnight - 7 * 3600 // 00:00 ICT
+            const endSec = startSec + 24 * 3600 // 24:00 ICT
+
+            resData = resData.filter((d: any) => d.time >= startSec && d.time <= endSec)
           }
+
+          return resData
         }
       } catch (e) {
-        console.error('CoinGecko history error:', e)
+        console.error('Binance crypto history error:', e)
       }
-
-      // If CoinGecko failed, don't fall through to Finnhub stock endpoint!
-      try {
-        const quote = await this.getQuote(sym)
-        const currentPrice = parseFloat(quote.price)
-        return this.generateMockHistoryFromPrice(sym, currentPrice, timeframe)
-      } catch (e) {
-        console.error('Failed to generate fallback history for crypto:', e)
-        return []
-      }
+      return []
     }
 
-    // 2. Try Finnhub (Stocks)
-    if (this.finnhubKey) {
-      try {
-        let resolution = 'D'
-        const to = Math.floor(Date.now() / 1000)
-        let from = to - (24 * 60 * 60) // 1D
+    // 2. Try Yahoo Finance (Stocks)
+    // We don't strictly need finnhubKey for historical data now since we use Yahoo Finance.
+    try {
+      let interval = '1d'
+      let range = '1y'
 
-        if (timeframe === '1D') {
-          resolution = '5' // 5 minute intervals
-          from = to - (24 * 60 * 60)
-        } else if (timeframe === '5D') {
-          resolution = '60' // hourly
-          from = to - (5 * 24 * 60 * 60)
-        } else if (timeframe === '1M') {
-          resolution = 'D'
-          from = to - (30 * 24 * 60 * 60)
-        } else if (timeframe === '6M') {
-          resolution = 'D'
-          from = to - (180 * 24 * 60 * 60)
-        }
+      if (timeframe === '1D') {
+        interval = '5m'
+        range = '1d'
+      } else if (timeframe === '5D') {
+        interval = '60m'
+        range = '5d'
+      } else if (timeframe === '1M') {
+        interval = '1d'
+        range = '1mo'
+      } else if (timeframe === '6M') {
+        interval = '1d'
+        range = '6mo'
+      } else if (timeframe === '1Y' || timeframe === 'YTD') {
+        interval = '1d'
+        range = '1y'
+      }
 
-        const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=${resolution}&from=${from}&to=${to}&token=${this.finnhubKey}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data && data.s === 'ok') {
-            const chartData = []
-            for (let i = 0; i < data.t.length; i++) {
+      const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=${interval}&range=${range}`)
+      if (res.ok) {
+        const data = await res.json()
+        const result = data.chart?.result?.[0]
+        
+        if (result && result.timestamp && result.indicators?.quote?.[0]?.close) {
+          let chartData = []
+          const timestamps = result.timestamp
+          const closes = result.indicators.quote[0].close
+          const volumes = result.indicators.quote[0].volume
+          
+          for (let i = 0; i < timestamps.length; i++) {
+            if (closes[i] !== null && closes[i] !== undefined) {
               chartData.push({
-                time: data.t[i],
-                value: parseFloat(data.c[i].toFixed(2))
+                time: timestamps[i],
+                value: parseFloat(closes[i].toFixed(2)),
+                volume: volumes && volumes[i] ? parseFloat(volumes[i]) : undefined
               })
             }
-            return chartData
           }
+          
+          return chartData
         }
-      } catch (e) {
-        console.error('Finnhub history error:', e)
       }
-
-      // Finnhub Free tier often blocks candle data ("You don't have access to this resource")
-      // Fallback: Generate a realistic mock chart walking backwards from the REAL current price
-      try {
-        const quote = await this.getQuote(sym)
-        const currentPrice = parseFloat(quote.price)
-        return this.generateMockHistoryFromPrice(sym, currentPrice, timeframe)
-      } catch (e) {
-        console.error('Failed to generate fallback history:', e)
-      }
+    } catch (e) {
+      console.error('Yahoo Finance history error:', e)
     }
 
-    // Fallback: Return empty array
+    // Fallback: Return empty array so chart knows there is no data
     return []
-  }
-
-  private generateMockHistoryFromPrice(symbol: string, currentPrice: number, timeframe: string): any[] {
-    let points = 24
-    let intervalSeconds = 60 * 60 // 1 hour
-
-    if (timeframe === '1D') {
-      points = 24
-      intervalSeconds = 60 * 60
-    } else if (timeframe === '5D') {
-      points = 120
-      intervalSeconds = 60 * 60
-    } else if (timeframe === '1M') {
-      points = 30
-      intervalSeconds = 24 * 60 * 60
-    } else if (timeframe === '6M') {
-      points = 180
-      intervalSeconds = 24 * 60 * 60
-    } else if (timeframe === '1Y' || timeframe === 'YTD') {
-      points = 365
-      intervalSeconds = 24 * 60 * 60
-    }
-
-    const now = Math.floor(Date.now() / 1000)
-    let seed = 0
-    for (let i = 0; i < symbol.length; i++) seed += symbol.charCodeAt(i)
-
-    const random = () => {
-      const x = Math.sin(seed++) * 10000
-      return x - Math.floor(x)
-    }
-
-    const data = []
-    let price = currentPrice
-    
-    // Generate backwards
-    for (let i = 0; i <= points; i++) {
-      data.unshift({
-        time: now - (i * intervalSeconds),
-        value: parseFloat(price.toFixed(2))
-      })
-      // Walk backwards by inversing a random percentage change (between -1% and +1%)
-      price = price / (1 + (random() * 0.02 - 0.01))
-    }
-
-    return data
   }
 }

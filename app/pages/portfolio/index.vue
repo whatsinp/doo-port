@@ -75,9 +75,18 @@
 
       <!-- Individual Portfolios -->
       <div
-        v-for="p in portfolios"
+        v-for="(p, index) in portfolios"
         :key="p.id"
-        class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow flex flex-col justify-between"
+        draggable="true"
+        @dragstart="onDragStart($event, index)"
+        @dragover.prevent="onDragOver($event, index)"
+        @drop="onDrop($event, index)"
+        @dragend="onDragEnd"
+        :class="[
+          'bg-white dark:bg-gray-800 rounded-xl shadow p-6 border transition-all flex flex-col justify-between cursor-move relative',
+          draggedIndex === index ? 'opacity-50 ring-2 ring-blue-400' : '',
+          dragOverIndex === index ? 'border-blue-500 scale-[1.02] shadow-lg' : 'border-gray-100 dark:border-gray-700 hover:shadow-md'
+        ]"
       >
         <div>
           <div class="flex justify-between items-start mb-1">
@@ -108,14 +117,15 @@
                มูลค่าพอร์ต
                <i v-if="loadingPrices" class="pi pi-spin pi-spinner text-blue-500"/>
              </div>
-             <div class="text-lg font-bold transition-colors flex items-baseline gap-1 flex-wrap" :class="getPortfolioPL(p.id).isProfit ? 'text-green-600 dark:text-green-400' : 'text-rose-600 dark:text-rose-400'">
+             <div class="text-xl font-bold text-gray-900 dark:text-white transition-colors flex items-baseline gap-1 flex-wrap">
                {{ formatCurrency(getPortfolioValueUSD(p.id), 'USD') }}
-               <span class="text-[13px] font-bold">
-                 ({{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ formatCurrency(String(getPortfolioPL(p.id).pl), 'USD') }} ({{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ Number(getPortfolioPL(p.id).plPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%))
-               </span>
              </div>
-             <div class="text-xs font-medium text-gray-500 mt-0.5">
-               ≈ {{ formatCurrency(getPortfolioValueUSD(p.id) * 35, 'THB') }}
+             <div class="text-xs font-medium text-gray-500 mt-0.5 mb-2">
+               ≈ {{ formatCurrency(getPortfolioValueUSD(p.id) * 33.07, 'THB') }}
+             </div>
+             <div class="text-sm font-bold flex items-center gap-1" :class="getPortfolioPL(p.id).isProfit ? 'text-green-500 dark:text-green-400' : 'text-rose-500 dark:text-rose-400'">
+               <i :class="getPortfolioPL(p.id).isProfit ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"/>
+               P/L: {{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ formatCurrency(String(getPortfolioPL(p.id).pl), 'USD') }} ({{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ Number(getPortfolioPL(p.id).plPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%)
              </div>
           </div>
         </div>
@@ -239,13 +249,63 @@ import { ref, computed } from 'vue'
 import { usePortfolios, type Portfolio } from '~/features/portfolio/composables/usePortfolios'
 import { useDashboard } from '~/features/dashboard/composables/useDashboard'
 
-const { portfolios, loading, createPortfolio, updatePortfolio, deletePortfolio } = usePortfolios()
+const { portfolios, loading, createPortfolio, updatePortfolio, updatePortfolioOrder, deletePortfolio } = usePortfolios()
 const { allHoldings, currentPrices, loadingPrices, currentTotalValue, loading: loadingHoldings } = useDashboard()
 
 const showDialog = ref(false)
 const editMode = ref(false)
 const editingId = ref('')
 const saving = ref(false)
+
+// Drag and drop state
+const draggedIndex = ref<number | null>(null)
+const dragOverIndex = ref<number | null>(null)
+
+const onDragStart = (event: DragEvent, index: number) => {
+  draggedIndex.value = index
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', index.toString())
+  }
+}
+
+const onDragOver = (event: DragEvent, index: number) => {
+  if (draggedIndex.value !== null && draggedIndex.value !== index) {
+    dragOverIndex.value = index
+  }
+}
+
+const onDragEnd = () => {
+  draggedIndex.value = null
+  dragOverIndex.value = null
+}
+
+const onDrop = async (event: DragEvent, index: number) => {
+  if (draggedIndex.value === null || draggedIndex.value === index) {
+    onDragEnd()
+    return
+  }
+
+  const fromIndex = draggedIndex.value
+  const toIndex = index
+
+  const items = [...portfolios.value]
+  const [movedItem] = items.splice(fromIndex, 1)
+  items.splice(toIndex, 0, movedItem)
+
+  const newOrders = items.map((item, i) => ({ id: item.id, order: i }))
+  
+  // Optimistically update
+  portfolios.value = items
+
+  try {
+    await updatePortfolioOrder(newOrders)
+  } catch (error) {
+    console.error('Failed to update portfolio order:', error)
+  } finally {
+    onDragEnd()
+  }
+}
 
 const form = ref({
   name: '',
@@ -314,9 +374,9 @@ const getPortfolioValueUSD = (portfolioId: string) => {
     let price = 0
     if (currentPrices.value[h.assetSymbol]) {
       price = currentPrices.value[h.assetSymbol]
-      if (h.assetSymbol.startsWith('THAIGOLD')) price = price / 35
+      if (h.assetSymbol.startsWith('THAIGOLD')) price = price / 33.07
     } else {
-      price = qty > 0 ? (h.assetSymbol.startsWith('THAIGOLD') ? cost / 35 / qty : cost / qty) : 0
+      price = qty > 0 ? (h.assetSymbol.startsWith('THAIGOLD') ? cost / 33.07 / qty : cost / qty) : 0
     }
     total += qty * price
   }
@@ -328,7 +388,7 @@ const getPortfolioCostUSD = (portfolioId: string) => {
     .filter(h => h.portfolioId === portfolioId && parseFloat(h.quantity) > 0)
     .reduce((total, h) => {
       let cost = parseFloat(h.costBasis) || 0
-      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 35
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 33.07
       return total + cost
     }, 0)
 }
@@ -349,7 +409,7 @@ const totalAllPortfoliosUSD = computed(() => {
     .filter(h => parseFloat(h.quantity) > 0)
     .reduce((total, h) => {
       let cost = parseFloat(h.costBasis) || 0
-      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 35
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 33.07
       return total + cost
     }, 0)
 })
@@ -359,7 +419,7 @@ const totalAllPortfoliosCostUSD = computed(() => {
     .filter(h => parseFloat(h.quantity) > 0)
     .reduce((total, h) => {
       let cost = parseFloat(h.costBasis) || 0
-      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 35
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 33.07
       return total + cost
     }, 0)
 })
@@ -373,6 +433,6 @@ const allPortfoliosPL = computed(() => {
 })
 
 const totalAllPortfoliosTHB = computed(() => {
-  return totalAllPortfoliosUSD.value * 35 // Used 35 consistently for THB estimate
+  return totalAllPortfoliosUSD.value * 33.07 // Used 33.07 consistently for THB estimate
 })
 </script>
