@@ -59,8 +59,9 @@
               {{ formatCurrency(totalAllPortfoliosUSD, 'USD') }}
             </div>
             <div class="text-sm font-medium text-blue-100 flex items-center bg-black/10 w-fit px-2 py-1 rounded backdrop-blur-sm">
-              <span class="mr-1 opacity-80">🇹🇭</span>
-              ≈ {{ formatCurrency(totalAllPortfoliosTHB, 'THB') }}
+              <p class="text-xs sm:text-sm font-medium text-gray-400 mt-1">
+                ≈ {{ formatCurrency(totalAllPortfoliosTHB, 'THB') }}
+              </p>
             </div>
             <div class="text-sm font-bold flex items-center gap-1 mt-2" :class="allPortfoliosPL.isProfit ? 'text-green-300' : 'text-rose-300'">
                <i :class="allPortfoliosPL.isProfit ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"/>
@@ -120,9 +121,9 @@
              <div class="text-xl font-bold text-gray-900 dark:text-white transition-colors flex items-baseline gap-1 flex-wrap">
                {{ formatCurrency(getPortfolioValueUSD(p.id), 'USD') }}
              </div>
-             <div class="text-xs font-medium text-gray-500 mt-0.5 mb-2">
-               ≈ {{ formatCurrency(getPortfolioValueUSD(p.id) * 33.07, 'THB') }}
-             </div>
+              <div class="text-xs text-gray-400">
+                ≈ {{ formatCurrency(getPortfolioValueUSD(p.id) * (exchangeRateTHB || 33.07), 'THB') }}
+              </div>
              <div class="text-sm font-bold flex items-center gap-1" :class="getPortfolioPL(p.id).isProfit ? 'text-green-500 dark:text-green-400' : 'text-rose-500 dark:text-rose-400'">
                <i :class="getPortfolioPL(p.id).isProfit ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"/>
                P/L: {{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ formatCurrency(String(getPortfolioPL(p.id).pl), 'USD') }} ({{ getPortfolioPL(p.id).pl >= 0 ? '+' : '' }}{{ Number(getPortfolioPL(p.id).plPercent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%)
@@ -248,9 +249,11 @@
 import { ref, computed } from 'vue'
 import { usePortfolios, type Portfolio } from '~/features/portfolio/composables/usePortfolios'
 import { useDashboard } from '~/features/dashboard/composables/useDashboard'
+import { useExchangeRate } from '~/composables/useExchangeRate'
 
 const { portfolios, loading, createPortfolio, updatePortfolio, updatePortfolioOrder, deletePortfolio } = usePortfolios()
 const { allHoldings, currentPrices, loadingPrices, currentTotalValue, loading: loadingHoldings } = useDashboard()
+const { exchangeRateTHB } = useExchangeRate()
 
 const showDialog = ref(false)
 const editMode = ref(false)
@@ -281,30 +284,28 @@ const onDragEnd = () => {
 }
 
 const onDrop = async (event: DragEvent, index: number) => {
-  if (draggedIndex.value === null || draggedIndex.value === index) {
-    onDragEnd()
-    return
+  if (draggedIndex.value === null || draggedIndex.value !== index) {
+    const fromIndex = draggedIndex.value
+    const toIndex = index
+
+    if (fromIndex !== null) {
+      const items = [...portfolios.value]
+      const [movedItem] = items.splice(fromIndex, 1)
+      items.splice(toIndex, 0, movedItem)
+
+      const newOrders = items.map((item, i) => ({ id: item.id, order: i }))
+      
+      // Optimistically update
+      portfolios.value = items
+
+      try {
+        await updatePortfolioOrder(newOrders)
+      } catch (error) {
+        console.error('Failed to update portfolio order:', error)
+      }
+    }
   }
-
-  const fromIndex = draggedIndex.value
-  const toIndex = index
-
-  const items = [...portfolios.value]
-  const [movedItem] = items.splice(fromIndex, 1)
-  items.splice(toIndex, 0, movedItem)
-
-  const newOrders = items.map((item, i) => ({ id: item.id, order: i }))
-  
-  // Optimistically update
-  portfolios.value = items
-
-  try {
-    await updatePortfolioOrder(newOrders)
-  } catch (error) {
-    console.error('Failed to update portfolio order:', error)
-  } finally {
-    onDragEnd()
-  }
+  onDragEnd()
 }
 
 const form = ref({
@@ -374,9 +375,9 @@ const getPortfolioValueUSD = (portfolioId: string) => {
     let price = 0
     if (currentPrices.value[h.assetSymbol]) {
       price = currentPrices.value[h.assetSymbol]
-      if (h.assetSymbol.startsWith('THAIGOLD')) price = price / 33.07
+      if (h.assetSymbol.startsWith('THAIGOLD')) price = price / (exchangeRateTHB.value || 33.07)
     } else {
-      price = qty > 0 ? (h.assetSymbol.startsWith('THAIGOLD') ? cost / 33.07 / qty : cost / qty) : 0
+      price = qty > 0 ? (h.assetSymbol.startsWith('THAIGOLD') ? cost / (exchangeRateTHB.value || 33.07) / qty : cost / qty) : 0
     }
     total += qty * price
   }
@@ -388,7 +389,7 @@ const getPortfolioCostUSD = (portfolioId: string) => {
     .filter(h => h.portfolioId === portfolioId && parseFloat(h.quantity) > 0)
     .reduce((total, h) => {
       let cost = parseFloat(h.costBasis) || 0
-      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 33.07
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / (exchangeRateTHB.value || 33.07)
       return total + cost
     }, 0)
 }
@@ -409,7 +410,7 @@ const totalAllPortfoliosUSD = computed(() => {
     .filter(h => parseFloat(h.quantity) > 0)
     .reduce((total, h) => {
       let cost = parseFloat(h.costBasis) || 0
-      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 33.07
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / (exchangeRateTHB.value || 33.07)
       return total + cost
     }, 0)
 })
@@ -419,7 +420,7 @@ const totalAllPortfoliosCostUSD = computed(() => {
     .filter(h => parseFloat(h.quantity) > 0)
     .reduce((total, h) => {
       let cost = parseFloat(h.costBasis) || 0
-      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 33.07
+      if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / (exchangeRateTHB.value || 33.07)
       return total + cost
     }, 0)
 })
@@ -433,6 +434,6 @@ const allPortfoliosPL = computed(() => {
 })
 
 const totalAllPortfoliosTHB = computed(() => {
-  return totalAllPortfoliosUSD.value * 33.07 // Used 33.07 consistently for THB estimate
+  return totalAllPortfoliosUSD.value * (exchangeRateTHB.value || 33.07)
 })
 </script>

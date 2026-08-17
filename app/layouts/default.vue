@@ -17,20 +17,24 @@ class="sm:hidden mr-3 p-1 rounded-md text-gray-500 hover:text-gray-700 dark:text
             </NuxtLink>
             <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
               <NuxtLink
-href="/dashboard"
-                class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                href="/dashboard"
+                active-class="!border-blue-600 !text-blue-600 dark:!text-blue-400"
+                class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-colors">
                 แผงควบคุม</NuxtLink>
               <NuxtLink
-href="/portfolio"
-                class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                href="/portfolio"
+                active-class="!border-blue-600 !text-blue-600 dark:!text-blue-400"
+                class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-colors">
                 พอร์ตการลงทุน</NuxtLink>
               <NuxtLink
-href="/market"
-                class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                href="/market"
+                active-class="!border-blue-600 !text-blue-600 dark:!text-blue-400"
+                class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-colors">
                 ตลาด</NuxtLink>
               <NuxtLink
-href="/favorites"
-                class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                href="/favorites"
+                active-class="!border-blue-600 !text-blue-600 dark:!text-blue-400"
+                class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-colors">
                 รายการที่คุณสนใจ</NuxtLink>
 
               <!-- 
@@ -170,22 +174,30 @@ class="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-whit
         </div>
         <div class="px-3 pt-4 pb-3 space-y-1">
           <NuxtLink
-href="/dashboard" class="block px-4 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
+            href="/dashboard" 
+            active-class="!bg-blue-50 !text-blue-600 dark:!bg-gray-800 dark:!text-blue-400"
+            class="block px-4 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
             @click="isMobileMenuOpen = false">
             <i class="pi pi-home mr-2"/> แผงควบคุม
           </NuxtLink>
           <NuxtLink
-href="/portfolio" class="block px-4 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
+            href="/portfolio" 
+            active-class="!bg-blue-50 !text-blue-600 dark:!bg-gray-800 dark:!text-blue-400"
+            class="block px-4 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
             @click="isMobileMenuOpen = false">
             <i class="pi pi-chart-pie mr-2"/> พอร์ตการลงทุน
           </NuxtLink>
           <NuxtLink
-href="/market" class="block px-4 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
+            href="/market" 
+            active-class="!bg-blue-50 !text-blue-600 dark:!bg-gray-800 dark:!text-blue-400"
+            class="block px-4 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
             @click="isMobileMenuOpen = false">
             <i class="pi pi-chart-line mr-2"/> ตลาด
           </NuxtLink>
           <NuxtLink
-href="/favorites" class="block px-4 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
+            href="/favorites" 
+            active-class="!bg-blue-50 !text-blue-600 dark:!bg-gray-800 dark:!text-blue-400"
+            class="block px-4 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
             @click="isMobileMenuOpen = false">
             <i class="pi pi-star mr-2"/> รายการที่สนใจ
           </NuxtLink>

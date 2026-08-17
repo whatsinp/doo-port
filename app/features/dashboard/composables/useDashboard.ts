@@ -4,12 +4,14 @@ import { useNuxtApp } from '#app'
 import { useAuth } from '~/features/auth/composables/useAuth'
 import type { Holding } from '~/features/portfolio/composables/useHoldings'
 import { usePortfolios } from '~/features/portfolio/composables/usePortfolios'
+import { useExchangeRate } from '~/composables/useExchangeRate'
 import Decimal from 'decimal.js'
 
 export const useDashboard = () => {
   const { $db } = useNuxtApp()
   const auth = useAuth()
   const { portfolios } = usePortfolios()
+  const { exchangeRateTHB } = useExchangeRate()
   const rawHoldings = ref<Holding[]>([])
   const loading = ref(true)
 
@@ -49,7 +51,7 @@ export const useDashboard = () => {
     for (const h of allHoldings.value) {
       if (parseFloat(h.quantity) > 0) {
         let cost = parseFloat(h.costBasis || '0')
-        if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 33.07
+        if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / (exchangeRateTHB.value || 33.07)
         total = total.plus(new Decimal(cost))
       }
     }
@@ -117,7 +119,7 @@ export const useDashboard = () => {
     let total = 0
     for (const h of aggregatedHoldings.value) {
       let price = currentPrices.value[h.symbol] || (h.quantity > 0 ? h.costBasis / h.quantity : 0) // fallback to average cost if API fails
-      if (h.symbol.startsWith('THAIGOLD')) price = price / 33.07
+      if (h.symbol.startsWith('THAIGOLD')) price = price / (exchangeRateTHB.value || 33.07)
       total += h.quantity * price
     }
     return total

@@ -20,7 +20,8 @@ export const useLedger = () => {
     assetSymbol: string,
     quantity: number,
     unitPrice: number,
-    tradeCurrency: string = 'USD'
+    tradeCurrency: string = 'USD',
+    exchangeRateUsed: number = 1
   ) => {
     const userId = getUserId()
     
@@ -46,19 +47,35 @@ export const useLedger = () => {
 
       let prevQty = new Decimal(0)
       let prevCostBasis = new Decimal(0)
+      let prevCostBasisTHB = new Decimal(0)
 
       if (holdingDoc.exists()) {
         const hData = holdingDoc.data()
         if (hData.userId !== userId) throw new Error('Unauthorized')
         prevQty = new Decimal(hData.quantity)
         prevCostBasis = new Decimal(hData.costBasis)
+        prevCostBasisTHB = hData.costBasisTHB !== undefined ? new Decimal(hData.costBasisTHB) : prevCostBasis.times(exchangeRateUsed)
+      }
+
+      let grossAmountBaseCurrency = grossAmount
+      if (assetSymbol.startsWith('THAIGOLD')) {
+        if (tradeCurrency === 'USD') {
+          grossAmountBaseCurrency = grossAmount.times(exchangeRateUsed)
+        }
+      } else {
+        if (tradeCurrency === 'THB') {
+          grossAmountBaseCurrency = grossAmount.dividedBy(exchangeRateUsed)
+        }
       }
 
       const newQuantity = prevQty.plus(buyQty)
-      const newCostBasis = prevCostBasis.plus(grossAmount)
+      const newCostBasis = prevCostBasis.plus(grossAmountBaseCurrency)
       const newAverageCost = newQuantity.isZero()
         ? new Decimal(0)
         : newCostBasis.dividedBy(newQuantity)
+        
+      const buyAmountTHB = tradeCurrency === 'THB' ? grossAmount : grossAmount.times(exchangeRateUsed)
+      const newCostBasisTHB = prevCostBasisTHB.plus(buyAmountTHB)
 
       t.set(txRef, {
         id: txId,
@@ -71,6 +88,8 @@ export const useLedger = () => {
         fees: '0',
         taxes: '0',
         grossAmount: grossAmount.toFixed(6),
+        exchangeRateUsed: exchangeRateUsed.toString(),
+        grossAmountTHB: buyAmountTHB.toFixed(6),
         tradeCurrency,
         transactionDate: new Date().toISOString(),
         createdAt: serverTimestamp()
@@ -83,9 +102,10 @@ export const useLedger = () => {
           userId,
           portfolioId,
           assetSymbol: assetSymbol.toUpperCase(),
-          tradeCurrency,
+          tradeCurrency: assetSymbol.startsWith('THAIGOLD') ? 'THB' : 'USD',
           quantity: newQuantity.toFixed(6),
           costBasis: newCostBasis.toFixed(6),
+          costBasisTHB: newCostBasisTHB.toFixed(6),
           averageCost: newAverageCost.toFixed(6),
           updatedAt: serverTimestamp()
         },
@@ -101,7 +121,8 @@ export const useLedger = () => {
     assetSymbol: string,
     quantity: number,
     unitPrice: number,
-    tradeCurrency: string = 'USD'
+    tradeCurrency: string = 'USD',
+    exchangeRateUsed: number = 1
   ) => {
     const userId = getUserId()
 
@@ -135,17 +156,33 @@ export const useLedger = () => {
       const prevQty = new Decimal(hData.quantity)
       const prevCostBasis = new Decimal(hData.costBasis)
       const prevAverageCost = new Decimal(hData.averageCost)
+      const prevCostBasisTHB = hData.costBasisTHB !== undefined ? new Decimal(hData.costBasisTHB) : prevCostBasis.times(exchangeRateUsed)
 
       if (sellQty.gt(prevQty)) {
         throw new Error('Cannot sell more than the currently owned quantity.')
       }
 
+      let grossAmountBaseCurrency = grossAmount
+      if (assetSymbol.startsWith('THAIGOLD')) {
+        if (tradeCurrency === 'USD') {
+          grossAmountBaseCurrency = grossAmount.times(exchangeRateUsed)
+        }
+      } else {
+        if (tradeCurrency === 'THB') {
+          grossAmountBaseCurrency = grossAmount.dividedBy(exchangeRateUsed)
+        }
+      }
+
       const costOfSoldQuantity = prevAverageCost.times(sellQty)
-      const realizedProfit = grossAmount.minus(costOfSoldQuantity)
+      const costOfSoldQuantityTHB = prevCostBasisTHB.times(sellQty.dividedBy(prevQty))
+      const realizedProfit = grossAmountBaseCurrency.minus(costOfSoldQuantity)
       
       const newQuantity = prevQty.minus(sellQty)
       const newCostBasis = prevCostBasis.minus(costOfSoldQuantity)
+      const newCostBasisTHB = prevCostBasisTHB.minus(costOfSoldQuantityTHB)
       const newAverageCost = newQuantity.isZero() ? new Decimal(0) : prevAverageCost
+      
+      const sellAmountTHB = tradeCurrency === 'THB' ? grossAmount : grossAmount.times(exchangeRateUsed)
 
       t.set(txRef, {
         id: txId,
@@ -158,6 +195,8 @@ export const useLedger = () => {
         fees: '0',
         taxes: '0',
         grossAmount: grossAmount.toFixed(6),
+        exchangeRateUsed: exchangeRateUsed.toString(),
+        grossAmountTHB: sellAmountTHB.toFixed(6),
         realizedProfit: realizedProfit.toFixed(6),
         tradeCurrency,
         transactionDate: new Date().toISOString(),
@@ -171,9 +210,10 @@ export const useLedger = () => {
           userId,
           portfolioId,
           assetSymbol: assetSymbol.toUpperCase(),
-          tradeCurrency,
+          tradeCurrency: assetSymbol.startsWith('THAIGOLD') ? 'THB' : 'USD',
           quantity: newQuantity.toFixed(6),
           costBasis: newCostBasis.toFixed(6),
+          costBasisTHB: newCostBasisTHB.toFixed(6),
           averageCost: newAverageCost.toFixed(6),
           updatedAt: serverTimestamp()
         },

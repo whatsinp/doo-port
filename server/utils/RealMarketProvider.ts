@@ -23,6 +23,7 @@ const NAME_MAP: Record<string, string> = {
   'AAPL': 'Apple Inc.',
   'MSFT': 'Microsoft Corporation',
   'GOOGL': 'Alphabet Inc.',
+  'INT': 'INTEL CORP',
   'AMZN': 'Amazon.com Inc.',
   'NVDA': 'NVIDIA Corporation',
   'META': 'Meta Platforms Inc.',

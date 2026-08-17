@@ -127,6 +127,49 @@
                   class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400 dark:placeholder-gray-500 uppercase font-mono"
                 >
               </div>
+              <div v-if="txForm.symbol.startsWith('THAIGOLD')" class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  สกุลเงินที่ใช้ทำธุรกรรม
+                </label>
+                <div class="flex gap-4">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" v-model="tradeCurrencyInput" value="THB" class="text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">THB (บาท)</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" v-model="tradeCurrencyInput" value="USD" class="text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">USD (ดอลลาร์สหรัฐ)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Exchange Rate Selection -->
+              <div v-show="!txForm.symbol.startsWith('THAIGOLD') || tradeCurrencyInput === 'USD'" class="mb-4 p-4 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  อัตราแลกเปลี่ยน (THB/USD)
+                </label>
+                <div class="flex gap-4 mb-3">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" v-model="exchangeRateMode" value="CURRENT" class="text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">อัตราปัจจุบัน</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" v-model="exchangeRateMode" value="CUSTOM" class="text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">กำหนดเอง</span>
+                  </label>
+                </div>
+                <div class="relative">
+                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">฿</span>
+                  <input
+                    v-model.number="displayedExchangeRate"
+                    type="number"
+                    step="any"
+                    min="0.01"
+                    :disabled="exchangeRateMode === 'CURRENT'"
+                    class="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:opacity-60 disabled:bg-gray-100 disabled:dark:bg-gray-700 font-mono"
+                  >
+                </div>
+              </div>
               
               <div class="flex gap-4">
                 <div class="flex-1">
@@ -148,7 +191,7 @@
                     ราคาต่อหน่วย
                   </label>
                   <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">{{ txForm.symbol.startsWith('THAIGOLD') ? '฿' : '$' }}</span>
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">{{ txForm.symbol.startsWith('THAIGOLD') ? (tradeCurrencyInput === 'THB' ? '฿' : '$') : '$' }}</span>
                     <input
                       v-model.number="txForm.price"
                       type="number"
@@ -161,6 +204,7 @@
                   </div>
                 </div>
               </div>
+
             </div>
 
             <div v-if="errorMsg" class="mt-4 p-3 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 rounded-r text-red-700 dark:text-red-400 text-sm flex items-center gap-2">
@@ -198,6 +242,7 @@ import { ref, watch, computed } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { useLedger } from '~/features/transactions/composables/useLedger'
 import { usePortfolios } from '~/features/portfolio/composables/usePortfolios'
+import { useExchangeRate } from '~/composables/useExchangeRate'
 
 const props = defineProps<{
   modelValue: boolean
@@ -211,6 +256,21 @@ const emit = defineEmits(['update:modelValue', 'transaction-success'])
 
 const { portfolios } = usePortfolios()
 const ledger = useLedger()
+const { exchangeRateTHB } = useExchangeRate()
+
+const tradeCurrencyInput = ref<'THB' | 'USD'>('THB')
+
+const exchangeRateMode = ref<'CURRENT' | 'CUSTOM'>('CURRENT')
+const customExchangeRate = ref<number | null>(null)
+
+const displayedExchangeRate = computed({
+  get: () => exchangeRateMode.value === 'CURRENT' ? (exchangeRateTHB.value || 33.07) : customExchangeRate.value,
+  set: (val) => {
+    if (exchangeRateMode.value === 'CUSTOM') {
+      customExchangeRate.value = val
+    }
+  }
+})
 
 const showModal = ref(false)
 const txType = ref<'BUY' | 'SELL'>('BUY')
@@ -249,6 +309,9 @@ watch(() => props.modelValue, (newVal) => {
     txForm.value.price = props.defaultPrice || null
     errorMsg.value = ''
     selectedPortfolioId.value = props.fixedPortfolioId || ''
+    tradeCurrencyInput.value = 'THB'
+    exchangeRateMode.value = 'CURRENT'
+    customExchangeRate.value = exchangeRateTHB.value || 33.07
   }
 })
 
@@ -273,19 +336,32 @@ const handleTransaction = async () => {
   errorMsg.value = ''
   
   try {
+    const isThaigold = txForm.value.symbol.startsWith('THAIGOLD')
+    const finalTradeCurrency = isThaigold ? tradeCurrencyInput.value : 'USD'
+    
+    // If trade currency is THB, exchange rate used should be 1 (no conversion needed against itself)
+    // If USD, use the selected or custom exchange rate
+    const exchangeRateUsed = finalTradeCurrency === 'THB'
+      ? 1 
+      : (exchangeRateMode.value === 'CURRENT' ? (exchangeRateTHB.value || 33.07) : (customExchangeRate.value || 33.07))
+
     if (txType.value === 'BUY') {
       await ledger.processBuy(
         targetPortfolio,
         txForm.value.symbol,
         txForm.value.quantity,
-        txForm.value.price
+        txForm.value.price,
+        finalTradeCurrency,
+        exchangeRateUsed
       )
     } else {
       await ledger.processSell(
         targetPortfolio,
         txForm.value.symbol,
         txForm.value.quantity,
-        txForm.value.price
+        txForm.value.price,
+        finalTradeCurrency,
+        exchangeRateUsed
       )
     }
     emit('transaction-success')

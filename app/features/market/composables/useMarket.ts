@@ -88,9 +88,13 @@ export const useMarket = () => {
             throw new Error('API returned success: false')
           }
           
+          const dbFav = dbFavorites.value.find(f => f.symbol === symbol)
+          const fetchedName = quoteRes.data?.name
+          const nameToUse = (fetchedName && fetchedName !== symbol) ? fetchedName : (dbFav?.name || symbol)
+          
           return {
             symbol,
-            name: quoteRes.data?.name || symbol,
+            name: nameToUse,
             type: 'Stock',
             quote: quoteRes.data,
             history: histRes.data

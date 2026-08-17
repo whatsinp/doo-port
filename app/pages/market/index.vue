@@ -93,8 +93,8 @@
                       : 'border-l-4 border-l-transparent'
                   "
                 >
-                  <div class="flex-1 cursor-pointer" @click="onRowClick(asset.symbol)">
-                    <div class="font-bold text-gray-900 dark:text-white">{{ asset.symbol }}</div>
+                  <div class="flex-1 cursor-pointer" @click="onRowClick(asset.symbol, asset.name)">
+                    <div class="font-bold text-gray-900 dark:text-white">{{ asset.symbol.length > 10 ? asset.symbol.substring(0, 10) + '...' : asset.symbol }}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                       {{ asset.name }}
                     </div>
@@ -136,15 +136,15 @@
                   "
                 >
                   <!-- Symbol & Name -->
-                  <div class="w-1/3 cursor-pointer" @click="onRowClick(asset.symbol)">
-                    <div class="font-bold text-gray-900 dark:text-white">{{ asset.symbol }}</div>
+                  <div class="w-1/3 cursor-pointer" @click="onRowClick(asset.symbol, asset.name)">
+                    <div class="font-bold text-gray-900 dark:text-white">{{ asset.symbol.length > 10 ? asset.symbol.substring(0, 10) + '...' : asset.symbol }}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                       {{ asset.name }}
                     </div>
                   </div>
 
                   <!-- Sparkline Chart -->
-                  <div class="w-1/3 h-10 cursor-pointer" @click="onRowClick(asset.symbol)">
+                  <div class="w-1/3 h-10 cursor-pointer" @click="onRowClick(asset.symbol, asset.name)">
                     <template v-if="!asset.error && asset.quote">
                       <SparklineChart
                         v-if="asset.history && asset.history.length > 0"
@@ -158,7 +158,7 @@
                   <div class="w-1/3 flex items-center justify-end gap-3">
                     <div
                       class="flex flex-col items-end cursor-pointer"
-                      @click="onRowClick(asset.symbol)"
+                      @click="onRowClick(asset.symbol, asset.name)"
                     >
                       <template v-if="!asset.error && asset.quote">
                         <div class="font-bold text-gray-900 dark:text-white text-sm">
@@ -232,20 +232,11 @@
                 <!-- Left: Name and Price -->
                 <div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div
-                      class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-sm"
-                      :class="
-                        selectedAsset.type === 'Crypto'
-                          ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
-                          : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                      "
-                    >
-                      {{ selectedAsset.symbol.substring(0, 1) }}
-                    </div>
+                    <AssetLogo :symbol="selectedAsset.symbol" class="w-16 h-16 rounded-2xl text-3xl" />
                     <div>
                       <div class="flex items-center gap-3">
-                        <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">
-                          {{ selectedAsset.symbol }}
+                        <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white" :title="selectedAsset.symbol">
+                          {{ selectedAsset.symbol.length > 10 ? selectedAsset.symbol.substring(0, 10) + '...' : selectedAsset.symbol }}
                         </h2>
                         <button
                           @click.stop="toggleFavoriteAndRefresh(selectedAsset.symbol)"
@@ -272,7 +263,7 @@
                       {{ selectedAsset.currency === 'THB' ? '฿' : '$' }}{{ selectedAsset.price }}
                     </span>
                     <span v-if="selectedAsset.currency !== 'THB'" class="text-lg text-gray-500 dark:text-gray-400 font-medium">
-                      ≈ ฿{{ (parseFloat(selectedAsset.price) * 33.07).toFixed(2) }}
+                      ≈ ฿{{ (parseFloat(selectedAsset.price) * (exchangeRateTHB || 33.07)).toFixed(2) }}
                     </span>
                   </div>
 
@@ -341,10 +332,17 @@
             <!-- Chart Section -->
             <div class="p-6 lg:p-8">
               <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">ประวัติราคา</h3>
+                <div class="flex items-baseline gap-3">
+                  <h3 class="text-lg font-bold text-gray-900 dark:text-white">ประวัติราคา</h3>
+                  <div v-if="selectedAsset" class="flex items-center gap-1 text-sm font-semibold" :class="historicalChangePercent >= 0 ? 'text-emerald-500' : 'text-rose-500'">
+                    <i :class="historicalChangePercent >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"></i>
+                    <span>{{ Math.abs(historicalChangePercent).toFixed(2) }}%</span>
+                    <span class="text-gray-500 dark:text-gray-400 font-medium ml-1">{{ historicalChangeText }}</span>
+                  </div>
+                </div>
                 <div class="flex gap-1 bg-gray-100 dark:bg-gray-900 p-1 rounded-lg">
                   <button
-                    v-for="tf in ['1D', '5D', '1M', '6M']"
+                    v-for="tf in ['1D', '5D', '1M', '6M', '1Y']"
                     :key="tf"
                     @click="setTimeframe(tf)"
                     class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
@@ -384,10 +382,12 @@ import { useMarket } from '~/features/market/composables/useMarket'
 import AssetChart from '~/components/AssetChart.vue'
 import SparklineChart from '~/components/SparklineChart.vue'
 import TransactionModal from '~/components/TransactionModal.vue'
+import { useExchangeRate } from '~/composables/useExchangeRate'
 
 const searchQuery = ref('')
 const activeTimeframe = ref('1D')
 const route = useRoute()
+const { exchangeRateTHB } = useExchangeRate()
 
 const {
   searchAssets,
@@ -414,6 +414,26 @@ const chartColor = computed(() => {
   const firstPoint = historicalData.value[0].value
   const lastPoint = historicalData.value[historicalData.value.length - 1].value
   return lastPoint >= firstPoint ? '#10b981' : '#f43f5e'
+})
+
+const historicalChangePercent = computed(() => {
+  if (activeTimeframe.value === '1D' && selectedAsset.value) {
+    return selectedAsset.value.changePercent
+  }
+  if (!historicalData.value || historicalData.value.length === 0) return 0
+  const firstPoint = historicalData.value[0].value
+  const lastPoint = historicalData.value[historicalData.value.length - 1].value
+  if (firstPoint === 0) return 0
+  return ((lastPoint - firstPoint) / firstPoint) * 100
+})
+
+const historicalChangeText = computed(() => {
+  if (activeTimeframe.value === '1D') return 'วันนี้'
+  if (activeTimeframe.value === '5D') return '5 วันย้อนหลัง'
+  if (activeTimeframe.value === '1M') return '1 เดือนย้อนหลัง'
+  if (activeTimeframe.value === '6M') return '6 เดือนย้อนหลัง'
+  if (activeTimeframe.value === '1Y') return '1 ปีย้อนหลัง'
+  return ''
 })
 
 // Watch for favorites to populate from Firebase, then fetch market data
@@ -480,9 +500,9 @@ const toggleFavoriteAndRefresh = async (symbol: string) => {
   // and additions from search will be fetched when clearing the search.
 }
 
-const onRowClick = async (symbol: string) => {
+const onRowClick = async (symbol: string, nameOverride?: string) => {
   activeTimeframe.value = '1D' // Reset timeframe
-  await fetchAssetDetails(symbol, activeTimeframe.value)
+  await fetchAssetDetails(symbol, activeTimeframe.value, nameOverride)
   
   // Scroll the selected asset into view in the sidebar
   nextTick(() => {

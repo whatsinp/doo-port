@@ -15,13 +15,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps<{
   symbol: string
 }>()
 
 const imageError = ref(false)
+
+watch(() => props.symbol, () => {
+  imageError.value = false
+})
 
 const colorPalette = [
   '#60a5fa', // Soft Blue
@@ -72,19 +76,49 @@ const LOGO_MAP: Record<string, string> = {
   'SPCX': getFavicon('spacex.com'),
   'STRL': getFavicon('strlco.com'),
   'ASML': getFavicon('asml.com'),
+  'INTC': getFavicon('intel.com'),
 }
 
-const logoUrl = computed(() => {
-  if (!props.symbol) return ''
-  const sym = props.symbol.toUpperCase()
+const logoUrl = ref('')
+
+watch(() => props.symbol, async (newSymbol) => {
+  imageError.value = false
+  if (!newSymbol) {
+    logoUrl.value = ''
+    return
+  }
   
+  const sym = newSymbol.toUpperCase()
+  
+  // 1. Check known logos
   if (LOGO_MAP[sym]) {
-    return LOGO_MAP[sym]
+    logoUrl.value = LOGO_MAP[sym]
+    return
   }
   
+  // 2. Check Thai Gold
   if (sym.startsWith('THAIGOLD') || sym === 'XAU' || sym === 'GOLD') {
-    return 'https://assets.coincap.io/assets/icons/paxg@2x.png' // Use PAXG icon for gold
+    logoUrl.value = 'https://assets.coincap.io/assets/icons/paxg@2x.png'
+    return
   }
-  return `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`
-})
+  
+  // 3. Check if it's a known crypto
+  const isCrypto = ['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'USDC', 'XRP', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'MATIC'].includes(sym)
+  if (isCrypto) {
+    logoUrl.value = `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`
+    return
+  }
+
+  // 4. Fallback to Finnhub Profile API for any unknown stock/asset
+  try {
+    const res = await $fetch<any>(`/api/market/profile/${sym}`)
+    if (res && res.logo) {
+      logoUrl.value = res.logo
+    } else {
+      logoUrl.value = `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`
+    }
+  } catch (e) {
+    logoUrl.value = `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`
+  }
+}, { immediate: true })
 </script>

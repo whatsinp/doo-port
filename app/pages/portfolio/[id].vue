@@ -83,7 +83,7 @@
               </div>
               <div class="text-sm font-medium text-gray-400 mt-2">
                 ≈ ฿{{
-                  (totalPortfolioValue * 33.07).toLocaleString('en-US', {
+                  totalPortfolioValueTHB.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })
@@ -130,8 +130,8 @@
                       : 'text-rose-500 dark:text-rose-400'
                   "
                 >
-                  ≈ {{ totalProfitLoss >= 0 ? '+' : '' }}฿{{
-                    (Math.abs(totalProfitLoss) * 33.07).toLocaleString('en-US', {
+                  ≈ {{ totalProfitLossTHB >= 0 ? '+' : '' }}฿{{
+                    Math.abs(totalProfitLossTHB).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })
@@ -182,7 +182,7 @@
               <template v-else>
                 {{ formatCurrency(getAssetProfitLoss(holding).currentVal, 'USD') }}
                 <span class="text-lg font-medium opacity-90">
-                  ≈ {{ formatCurrency(getAssetProfitLoss(holding).currentVal * 33.07, 'THB') }}
+                  ≈ {{ formatCurrency(getAssetProfitLoss(holding).currentVal * (exchangeRateTHB || 33.07), 'THB') }}
                 </span>
               </template>
             </div>
@@ -211,14 +211,14 @@
                 <span
                   >% กำไรและมูลค่า:
                   {{
-                    Number(getAssetProfitLoss(holding).plPercent).toLocaleString('en-US', {
+                    Number(getAssetProfitLoss(holding).plPercentTHB).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })
-                  }}% ({{ getAssetProfitLoss(holding).pl >= 0 ? '+' : ''
+                  }}% ({{ getAssetProfitLoss(holding).plTHB >= 0 ? '+' : ''
                   }}{{ formatCurrency(getAssetProfitLoss(holding).pl, 'USD') }} ≈
-                  {{ getAssetProfitLoss(holding).pl >= 0 ? '+' : ''
-                  }}{{ formatCurrency(getAssetProfitLoss(holding).pl * 33.07, 'THB') }})</span
+                  {{ getAssetProfitLoss(holding).plTHB >= 0 ? '+' : ''
+                  }}{{ formatCurrency(getAssetProfitLoss(holding).plTHB, 'THB') }})</span
                 >
               </template>
             </div>
@@ -411,18 +411,25 @@
                     </div>
 
                     <!-- Chart Section -->
-                    <div class="mt-4 flex-1 flex flex-col min-h-[300px]">
-                      <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-sm font-bold text-gray-900">ประวัติราคา</h3>
-                        <div class="flex bg-gray-100 rounded-lg p-1">
+                    <div class="mt-4 p-6 lg:p-8 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                      <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-baseline gap-3">
+                          <h3 class="text-lg font-bold text-gray-900 dark:text-white">ประวัติราคา</h3>
+                          <div class="flex items-center gap-1 text-sm font-semibold" :class="historicalChangePercentForDetails >= 0 ? 'text-emerald-500' : 'text-rose-500'">
+                            <i :class="historicalChangePercentForDetails >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"></i>
+                            <span>{{ Math.abs(historicalChangePercentForDetails).toFixed(2) }}%</span>
+                            <span class="text-gray-500 dark:text-gray-400 font-medium ml-1">{{ historicalChangeTextForDetails }}</span>
+                          </div>
+                        </div>
+                        <div class="flex gap-1 bg-gray-100 dark:bg-gray-900 p-1 rounded-lg">
                           <button
-                            v-for="tf in ['1D', '5D', '1M', '6M']"
+                            v-for="tf in ['1D', '5D', '1M', '6M', '1Y']"
                             :key="tf"
-                            class="px-3 py-1 text-xs font-bold rounded-md transition-colors"
+                            class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
                             :class="
                               selectedTimeframe === tf
-                                ? 'bg-white text-blue-600 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             "
                             @click="changeTimeframe(tf)"
                           >
@@ -430,19 +437,14 @@
                           </button>
                         </div>
                       </div>
-                      <div class="flex-1 w-full bg-white relative">
+                      <div class="flex-1 w-full min-h-[300px] relative">
                         <AssetChart
                           :data="chartDataForDetails"
                           :loading="loadingChartForDetails"
                           :currency="
                             getAssetProfitLoss(selectedHoldingForDetails).quote?.currency || 'USD'
                           "
-                          :color="
-                            (getAssetProfitLoss(selectedHoldingForDetails).quote?.changePercent ||
-                              0) >= 0
-                              ? '#10b981'
-                              : '#ef4444'
-                          "
+                          :color="chartColorForDetails"
                         />
                       </div>
                     </div>
@@ -620,6 +622,81 @@
                         </div>
                       </div>
 
+                      <!-- Total Profit/Loss -->
+                      <div
+                        class="col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center group relative cursor-default overflow-hidden sm:overflow-visible"
+                      >
+                        <p class="text-sm text-gray-500 font-bold mb-1">
+                          มูลค่าปัจจุบันและ กำไรทั้งหมดของสินทรัพย์นี้
+                        </p>
+                        <div class="flex items-center gap-2 mt-1 w-full">
+                          <div
+                            class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg font-bold text-sm shrink-0"
+                            :class="
+                              getAssetProfitLoss(selectedHoldingForDetails).plTHB >= 0
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-rose-100 text-rose-700'
+                            "
+                          >
+                            <i
+                              :class="
+                                getAssetProfitLoss(selectedHoldingForDetails).plTHB >= 0
+                                  ? 'pi pi-arrow-up'
+                                  : 'pi pi-arrow-down'
+                              "
+                              class="text-[10px]"
+                            />
+                            {{
+                              Number(
+                                getAssetProfitLoss(selectedHoldingForDetails).plPercentTHB
+                              ).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })
+                            }}%
+                          </div>
+                          <div class="truncate flex-1 min-w-0 text-lg font-bold flex flex-wrap items-baseline gap-2">
+                            <span class="text-gray-900">
+                              {{ formatCurrency(getAssetProfitLoss(selectedHoldingForDetails).currentValTHB, 'THB') }}
+                            </span>
+                            <span
+                              :title="(getAssetProfitLoss(selectedHoldingForDetails).plTHB >= 0 ? '+' : '') + formatCurrency(getAssetProfitLoss(selectedHoldingForDetails).plTHB, 'THB')"
+                              :class="
+                                getAssetProfitLoss(selectedHoldingForDetails).plTHB >= 0
+                                  ? 'text-green-600'
+                                  : 'text-rose-600'
+                              "
+                            >
+                              ({{
+                                getAssetProfitLoss(selectedHoldingForDetails).plTHB >= 0
+                                  ? '+'
+                                  : ''
+                              }}{{
+                                formatCurrency(getAssetProfitLoss(selectedHoldingForDetails).plTHB, 'THB')
+                              }})
+                            </span>
+                          </div>
+                        </div>
+                        <div
+                          class="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:-translate-y-1 group-hover:opacity-100 z-50"
+                        >
+                          {{
+                            getAssetProfitLoss(selectedHoldingForDetails).pl >= 0 ? '+' : ''
+                          }}{{
+                            formatCurrency(
+                              toTHB(
+                                selectedHoldingForDetails.assetSymbol,
+                                getAssetProfitLoss(selectedHoldingForDetails).pl
+                              ),
+                              'THB'
+                            )
+                          }}
+                          <div
+                            class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-gray-900"
+                          ></div>
+                        </div>
+                      </div>
+
                       <div
                         class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center group relative cursor-default"
                       >
@@ -707,6 +784,7 @@
                           ></div>
                         </div>
                       </div>
+
                     </div>
 
                     <!-- Actions -->
@@ -754,6 +832,7 @@ import { useRoute } from 'vue-router'
 import { useHoldings } from '~/features/portfolio/composables/useHoldings'
 import { usePortfolios } from '~/features/portfolio/composables/usePortfolios'
 import { useLedger } from '~/features/transactions/composables/useLedger'
+import { useExchangeRate } from '~/composables/useExchangeRate'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -787,22 +866,44 @@ const portfolioDetails = computed(() => portfolios.value.find((p) => p.id === po
 
 const { holdings, loading } = useHoldings(portfolioId)
 const ledger = useLedger()
+const { exchangeRateTHB } = useExchangeRate()
 
 const totalPortfolioValue = computed(() => {
   return activeHoldings.value.reduce((total, h) => {
     let price = currentQuotes.value[h.assetSymbol]
       ? parseFloat(currentQuotes.value[h.assetSymbol].price)
       : 0
-    if (h.assetSymbol.startsWith('THAIGOLD')) price = price / 33.07
+    if (h.assetSymbol.startsWith('THAIGOLD')) price = price / (exchangeRateTHB.value || 33.07)
     return total + parseFloat(h.quantity) * price
+  }, 0)
+})
+
+const totalPortfolioValueTHB = computed(() => {
+  return activeHoldings.value.reduce((total, h) => {
+    let price = currentQuotes.value[h.assetSymbol] ? parseFloat(currentQuotes.value[h.assetSymbol].price) : 0
+    let val = parseFloat(h.quantity) * price
+    if (!h.assetSymbol.startsWith('THAIGOLD')) {
+      val = val * (exchangeRateTHB.value || 33.07)
+    }
+    return total + val
   }, 0)
 })
 
 const totalCostBasis = computed(() => {
   return activeHoldings.value.reduce((total, h) => {
     let cost = parseFloat(h.costBasis) || 0
-    if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / 33.07
+    if (h.assetSymbol.startsWith('THAIGOLD')) cost = cost / (exchangeRateTHB.value || 33.07)
     return total + cost
+  }, 0)
+})
+
+const totalCostBasisTHB = computed(() => {
+  return activeHoldings.value.reduce((total, h) => {
+    if (h.assetSymbol.startsWith('THAIGOLD')) return total + (parseFloat(h.costBasis) || 0)
+    let costTHB = h.costBasisTHB !== undefined 
+      ? parseFloat(h.costBasisTHB) 
+      : (parseFloat(h.costBasis) || 0) * (exchangeRateTHB.value || 33.07)
+    return total + costTHB
   }, 0)
 })
 
@@ -866,15 +967,31 @@ const totalProfitLossPercent = computed(() => {
   return (totalProfitLoss.value / totalCostBasis.value) * 100
 })
 
+const totalProfitLossTHB = computed(() => {
+  return totalPortfolioValueTHB.value - totalCostBasisTHB.value
+})
+
 const getAssetProfitLoss = (holding: any) => {
   const qty = parseFloat(holding.quantity)
   const cost = parseFloat(holding.costBasis)
+  
+  const costTHB = holding.costBasisTHB !== undefined 
+    ? parseFloat(holding.costBasisTHB) 
+    : (holding.assetSymbol.startsWith('THAIGOLD') ? cost : cost * (exchangeRateTHB.value || 33.07))
+  
   const quote = currentQuotes.value[holding.assetSymbol]
   const price = quote?.price ? parseFloat(quote.price) : qty > 0 ? cost / qty : 0
+  
   const currentVal = qty * price
+  const currentValTHB = holding.assetSymbol.startsWith('THAIGOLD') ? currentVal : currentVal * (exchangeRateTHB.value || 33.07)
+
   const pl = currentVal - cost
   const plPercent = cost > 0 ? (pl / cost) * 100 : 0
-  return { pl, plPercent, price, currentVal, quote }
+  
+  const plTHB = currentValTHB - costTHB
+  const plPercentTHB = costTHB > 0 ? (plTHB / costTHB) * 100 : 0
+  
+  return { pl, plPercent, price, currentVal, currentValTHB, costTHB, plTHB, plPercentTHB, quote }
 }
 
 // Asset Details Modal Logic
@@ -916,6 +1033,36 @@ const closeDetailsModal = () => {
   selectedHoldingForDetails.value = null
 }
 
+const chartColorForDetails = computed(() => {
+  if (selectedTimeframe.value === '1D') {
+    return (getAssetProfitLoss(selectedHoldingForDetails.value).quote?.changePercent || 0) >= 0 ? '#10b981' : '#ef4444'
+  }
+  if (!chartDataForDetails.value || chartDataForDetails.value.length === 0) return '#10b981'
+  const firstPoint = chartDataForDetails.value[0].value
+  const lastPoint = chartDataForDetails.value[chartDataForDetails.value.length - 1].value
+  return lastPoint >= firstPoint ? '#10b981' : '#ef4444'
+})
+
+const historicalChangePercentForDetails = computed(() => {
+  if (selectedTimeframe.value === '1D') {
+    return getAssetProfitLoss(selectedHoldingForDetails.value).quote?.changePercent || 0
+  }
+  if (!chartDataForDetails.value || chartDataForDetails.value.length === 0) return 0
+  const firstPoint = chartDataForDetails.value[0].value
+  const lastPoint = chartDataForDetails.value[chartDataForDetails.value.length - 1].value
+  if (firstPoint === 0) return 0
+  return ((lastPoint - firstPoint) / firstPoint) * 100
+})
+
+const historicalChangeTextForDetails = computed(() => {
+  if (selectedTimeframe.value === '1D') return 'วันนี้'
+  if (selectedTimeframe.value === '5D') return '5 วันย้อนหลัง'
+  if (selectedTimeframe.value === '1M') return '1 เดือนย้อนหลัง'
+  if (selectedTimeframe.value === '6M') return '6 เดือนย้อนหลัง'
+  if (selectedTimeframe.value === '1Y') return '1 ปีย้อนหลัง'
+  return ''
+})
+
 const openTxFromDetails = (type: 'BUY' | 'SELL') => {
   if (!selectedHoldingForDetails.value) return
   openTransactionDialog(type, selectedHoldingForDetails.value.assetSymbol)
@@ -936,7 +1083,7 @@ const chartData = computed(() => {
         backgroundColor: activeHoldings.value.map((h) => getAssetColor(h.assetSymbol)),
         data: activeHoldings.value.map((h) => {
           let val = parseFloat(h.costBasis)
-          if (h.assetSymbol.startsWith('THAIGOLD')) val = val / 33.07
+          if (h.assetSymbol.startsWith('THAIGOLD')) val = val / (exchangeRateTHB.value || 33.07)
           return val
         }),
         borderWidth: 0,
@@ -1024,6 +1171,6 @@ const formatCurrency = (val: string | number, currency?: string) => {
 
 const toTHB = (symbol: string, value: number) => {
   if (symbol.startsWith('THAIGOLD')) return value
-  return value * 33.07
+  return value * (exchangeRateTHB.value || 33.07)
 }
 </script>

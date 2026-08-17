@@ -29,7 +29,7 @@
               {{ formatCurrency(totalCostBasis) }} <span class="text-xl font-bold text-gray-500 dark:text-gray-400">USD</span>
             </p>
             <p class="text-sm font-medium text-gray-400 mt-1">
-              ≈ ฿{{ (totalCostBasis * 33.07).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
+              ≈ ฿{{ (totalCostBasis * exchangeRateTHB).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
             </p>
           </div>
         </div>
@@ -43,7 +43,7 @@
               {{ formatCurrency(currentTotalValue) }} <span class="text-xl font-bold text-gray-500 dark:text-gray-400">USD</span>
             </p>
             <p class="text-sm font-medium text-gray-400 mt-1">
-              ≈ ฿{{ (currentTotalValue * 33.07).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
+              ≈ ฿{{ (currentTotalValue * exchangeRateTHB).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
             </p>
           </div>
           <div class="text-xs text-gray-400 mt-1 flex items-center gap-1">
@@ -61,7 +61,7 @@
               <span class="text-xl font-bold" :class="totalProfitLoss >= 0 ? 'text-green-600/70' : 'text-rose-600/70'">USD</span>
             </p>
             <p class="text-sm font-medium mt-1" :class="totalProfitLoss >= 0 ? 'text-green-500 dark:text-green-400' : 'text-rose-500 dark:text-rose-400'">
-              ≈ {{ totalProfitLoss >= 0 ? '+' : '' }}฿{{ (Math.abs(totalProfitLoss) * 33.07).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
+              ≈ {{ totalProfitLoss >= 0 ? '+' : '' }}฿{{ (Math.abs(totalProfitLoss) * exchangeRateTHB).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} THB
             </p>
           </div>
           <div class="text-sm font-medium mt-1" :class="totalProfitLoss >= 0 ? 'text-green-500' : 'text-rose-500'">
@@ -151,6 +151,7 @@
 import { computed } from 'vue'
 import { useDashboard } from '~/features/dashboard/composables/useDashboard'
 import { useProfile } from '~/features/profile/composables/useProfile'
+import { useExchangeRate } from '~/composables/useExchangeRate'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 
@@ -158,13 +159,14 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { aggregatedHoldings, loading, totalCostBasis, currentPrices, loadingPrices, currentTotalValue } = useDashboard()
 const { profile } = useProfile()
+const { exchangeRateTHB } = useExchangeRate()
 
 const formatCurrency = (val: number, currency: string = 'USD') => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(val)
 }
 
 const toUSD = (symbol: string, value: number) => {
-  return symbol.startsWith('THAIGOLD') ? value / 33.07 : value
+  return symbol.startsWith('THAIGOLD') ? value / (exchangeRateTHB.value || 33.07) : value
 }
 
 const sortedHoldings = computed(() => {
