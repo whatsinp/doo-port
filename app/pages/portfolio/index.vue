@@ -55,7 +55,7 @@
           
           <div class="space-y-1">
             <div class="text-sm font-medium opacity-80 mb-1">มูลค่ารวมทั้งหมด</div>
-            <div class="text-2xl font-bold drop-shadow-sm transition-colors" :class="allPortfoliosPL.isProfit ? 'text-green-300' : 'text-rose-300'">
+            <div class="text-2xl font-bold drop-shadow-sm transition-colors text-green-300">
               {{ formatCurrency(totalAllPortfoliosUSD, 'USD') }}
             </div>
             <div class="text-sm font-medium text-blue-100 flex items-center bg-black/10 w-fit px-2 py-1 rounded backdrop-blur-sm">

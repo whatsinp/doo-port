@@ -5,13 +5,13 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  sendEmailVerification,
   reauthenticateWithCredential,
   EmailAuthProvider,
   updatePassword,
   confirmPasswordReset
 } from 'firebase/auth'
-import type { User, ActionCodeSettings ,
-  getAuth} from 'firebase/auth'
+import type { User, ActionCodeSettings, getAuth } from 'firebase/auth'
 import { useNuxtApp } from '#app'
 
 export const useAuth = () => {
@@ -58,6 +58,11 @@ export const useAuth = () => {
     await updatePassword(user.value, newPassword)
   }
 
+  const sendVerificationEmail = async (actionCodeSettings?: ActionCodeSettings) => {
+    if (!user.value) throw new Error('User not logged in')
+    await sendEmailVerification(user.value, actionCodeSettings)
+  }
+
   return {
     user,
     loading,
@@ -67,6 +72,7 @@ export const useAuth = () => {
     resetPassword,
     confirmResetPassword,
     reauthenticate,
-    changePassword
+    changePassword,
+    sendVerificationEmail
   }
 }

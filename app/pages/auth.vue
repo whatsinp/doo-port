@@ -179,6 +179,8 @@
                   v-model="registerEmail"
                   type="email"
                   required
+                  pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+                  title="กรุณากรอกอีเมลให้ถูกต้อง (เช่น name@example.com)"
                   autocomplete="off"
                   placeholder="อีเมล"
                   class="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
@@ -341,21 +343,17 @@ const handleRegister = async () => {
       profileUpdates.nickname = registerNickname.value
     }
 
-    /* DISABLED_IMAGE_UPLOAD
-    if (registerAvatarFile.value) {
-      const fileExt = registerAvatarFile.value.name.split('.').pop()
-      const fileName = `avatars/${user.uid}-${Date.now()}.${fileExt}`
-      const sRef = storageRef($storage, fileName)
-      await uploadBytes(sRef, registerAvatarFile.value)
-      profileUpdates.avatarUrl = await getDownloadURL(sRef)
-    }
-    */
-
     const docRef = doc($db, 'users', user.uid)
     await setDoc(docRef, profileUpdates, { merge: true })
 
-    toast.success('Your account has been created successfully.', 'Welcome!')
-    router.push('/dashboard')
+    // Send email verification
+    await auth.sendVerificationEmail({
+      url: `${window.location.origin}/dashboard`,
+      handleCodeInApp: true
+    })
+
+    toast.success('สมัครสมาชิกสำเร็จ กรุณายืนยันอีเมลของคุณ', 'Welcome!')
+    router.push('/verify-email')
   } catch (error: any) {
     toast.error(error.message || 'Failed to register', 'Registration Failed')
   } finally {

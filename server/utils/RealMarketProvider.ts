@@ -41,12 +41,15 @@ const NAME_MAP: Record<string, string> = {
   'SCB': 'SCB X Public Company Limited',
   'NFLX': 'Netflix Inc.',
   'DIS': 'The Walt Disney Company',
+  'MU': 'Micron Technology Inc.',
   'GOLD': 'Gold (XAU/USD)',
   'XAU': 'Gold (XAU/USD)',
   'THAIGOLD': 'ทองคำแท่ง 96.5%',
   'THAIGOLD_ORN': 'ทองคำรูปพรรณ 96.5%',
   'THAIGOLD_ORNAMENT': 'ทองคำรูปพรรณ 96.5%'
 }
+
+const nameCache = new Map<string, string>()
 
 export class RealMarketProvider implements MarketProvider {
   private finnhubKey: string
@@ -90,13 +93,16 @@ export class RealMarketProvider implements MarketProvider {
             const stocks = data.result
               .filter((r: any) => r.type === 'Common Stock' && !r.symbol.includes('.'))
               .slice(0, 10)
-              .map((r: any) => ({
-                symbol: r.symbol,
-                name: r.description,
-                currency: 'USD',
-                exchange: 'US',
-                type: 'Stock'
-              }))
+              .map((r: any) => {
+                nameCache.set(r.symbol, r.description)
+                return {
+                  symbol: r.symbol,
+                  name: r.description,
+                  currency: 'USD',
+                  exchange: 'US',
+                  type: 'Stock'
+                }
+              })
             results.push(...stocks)
           }
         }
@@ -113,13 +119,17 @@ export class RealMarketProvider implements MarketProvider {
         if (data && data.coins) {
           const cryptos = data.coins
             .slice(0, 5)
-            .map((c: any) => ({
-              symbol: c.symbol.toUpperCase(),
-              name: c.name,
-              currency: 'USD',
-              exchange: 'CRYPTO',
-              type: 'Crypto'
-            }))
+            .map((c: any) => {
+              const sym = c.symbol.toUpperCase()
+              nameCache.set(sym, c.name)
+              return {
+                symbol: sym,
+                name: c.name,
+                currency: 'USD',
+                exchange: 'CRYPTO',
+                type: 'Crypto'
+              }
+            })
           
           // Add to results avoiding duplicate symbols
           for (const c of cryptos) {
@@ -150,7 +160,7 @@ export class RealMarketProvider implements MarketProvider {
           const buyStr = goldData.buy.replace(/,/g, '')
           return {
             symbol: sym,
-            name: NAME_MAP[sym] || (sym === 'THAIGOLD' ? 'ทองคำแท่ง 96.5%' : 'ทองรูปพรรณ 96.5%'),
+            name: NAME_MAP[sym] || nameCache.get(sym) || (sym === 'THAIGOLD' ? 'ทองคำแท่ง 96.5%' : 'ทองรูปพรรณ 96.5%'),
             price: parseFloat(sellStr).toFixed(2),
             currency: 'THB',
             changePercent: 0, // API doesn't provide % change easily
@@ -162,6 +172,35 @@ export class RealMarketProvider implements MarketProvider {
       } catch (e) {
         console.error('Thai Gold API error:', e)
       }
+
+      // Fallback to calculating from Binance PAXG if Thai Gold API is down
+      try {
+        console.warn('Falling back to Binance PAXG for Thai Gold quote')
+        const binanceRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT')
+        if (binanceRes.ok) {
+           const bData = await binanceRes.json()
+           if (bData && bData.lastPrice) {
+             const multiplier = (15.244 / 31.1034) * 33.07 // 1 Baht Gold = 15.244g / 31.1034g/oz * 33.07 THB/USD
+             const price = (parseFloat(bData.lastPrice) * multiplier)
+             const dayLow = (parseFloat(bData.lowPrice) * multiplier)
+             const dayHigh = (parseFloat(bData.highPrice) * multiplier)
+             
+             return {
+              symbol: sym,
+              name: NAME_MAP[sym] || nameCache.get(sym) || (sym === 'THAIGOLD' ? 'ทองคำแท่ง 96.5%' : 'ทองรูปพรรณ 96.5%'), 
+              price: price.toFixed(2),
+              currency: 'THB',
+              changePercent: parseFloat(bData.priceChangePercent),
+              dayLow: dayLow.toFixed(2),
+              dayHigh: dayHigh.toFixed(2),
+              asOf: new Date().toISOString()
+             }
+           }
+        }
+      } catch(e) {
+         console.error('Binance fallback quote error:', e)
+      }
+
       throw new Error(`Thai Gold API unavailable`)
     }
 
@@ -175,7 +214,7 @@ export class RealMarketProvider implements MarketProvider {
           if (data[id]) {
             return {
               symbol: sym,
-              name: NAME_MAP[sym] || sym,
+              name: NAME_MAP[sym] || nameCache.get(sym) || sym,
               price: data[id].usd.toFixed(2),
               currency: 'USD',
               changePercent: data[id].usd_24h_change ? parseFloat(data[id].usd_24h_change.toFixed(2)) : 0,
@@ -201,7 +240,7 @@ export class RealMarketProvider implements MarketProvider {
            if (bData && bData.lastPrice) {
              return {
               symbol: sym,
-              name: NAME_MAP[sym] || sym, 
+              name: NAME_MAP[sym] || nameCache.get(sym) || sym, 
               price: parseFloat(bData.lastPrice).toFixed(2),
               currency: 'USD',
               changePercent: parseFloat(bData.priceChangePercent),
@@ -228,9 +267,26 @@ export class RealMarketProvider implements MarketProvider {
           const data = await res.json()
           // Finnhub returns c=0 if not found
           if (data && data.c > 0) {
+            let assetName = NAME_MAP[sym] || nameCache.get(sym)
+            if (!assetName) {
+              try {
+                const profileRes = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${this.finnhubKey}`)
+                if (profileRes.ok) {
+                  const profileData = await profileRes.json()
+                  if (profileData && profileData.name) {
+                    assetName = profileData.name
+                  }
+                }
+              } catch(e) {
+                console.error('Finnhub profile2 error:', e)
+              }
+              assetName = assetName || sym
+              nameCache.set(sym, assetName)
+            }
+
             return {
               symbol: sym,
-              name: NAME_MAP[sym] || sym,
+              name: assetName,
               price: data.c.toFixed(2),
               currency: 'USD',
               changePercent: data.dp ? parseFloat(data.dp.toFixed(2)) : 0,

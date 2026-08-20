@@ -262,14 +262,14 @@
             leave-from-class="opacity-100 translate-y-0 scale-100"
             leave-to-class="opacity-0 translate-y-4 scale-95"
           >
-            <!-- Dialog Container (Solid White) -->
+            <!-- Dialog Container -->
             <div
-              class="relative w-full max-w-6xl bg-white rounded-[32px] shadow-2xl overflow-hidden border border-gray-100"
+              class="relative w-full max-w-6xl bg-white dark:bg-gray-900 rounded-[32px] shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800"
             >
               <div class="p-6 lg:p-8 lg:pr-12">
                 <!-- Close Button -->
                 <button
-                  class="absolute top-4 right-4 lg:top-6 lg:right-6 w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-gray-600 transition-colors z-10"
+                  class="absolute top-4 right-4 lg:top-6 lg:right-6 w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-400 transition-colors z-10"
                   @click="closeDetailsModal"
                 >
                   <i class="pi pi-times text-sm lg:text-base" />
@@ -278,7 +278,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4 lg:mt-0">
                   <!-- Left Column: Chart and Summary -->
                   <div
-                    class="lg:col-span-7 flex flex-col gap-6 border-b lg:border-b-0 lg:border-r border-gray-100 pb-8 lg:pb-0 lg:pr-8"
+                    class="lg:col-span-7 flex flex-col gap-6 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-gray-800 pb-8 lg:pb-0 lg:pr-8"
                   >
                     <!-- Header -->
                     <div class="flex items-center gap-4">
@@ -287,10 +287,10 @@
                         class="w-16 h-16 rounded-2xl shadow-lg text-3xl text-white"
                       />
                       <div>
-                        <h2 class="text-3xl font-bold text-gray-900 tracking-tight">
+                        <h2 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                           {{ selectedHoldingForDetails.assetSymbol }}
                         </h2>
-                        <p class="text-gray-600 font-medium line-clamp-1">
+                        <p class="text-gray-600 dark:text-gray-400 font-medium line-clamp-1">
                           {{
                             getAssetProfitLoss(selectedHoldingForDetails).quote?.name ||
                             'Loading...'
@@ -306,7 +306,7 @@
                           <template
                             v-if="selectedHoldingForDetails.assetSymbol.startsWith('THAIGOLD')"
                           >
-                            <span class="text-3xl font-bold text-gray-900 drop-shadow-sm">
+                            <span class="text-3xl font-bold text-gray-900 dark:text-white drop-shadow-sm">
                               {{
                                 formatCurrency(
                                   getAssetProfitLoss(selectedHoldingForDetails).price,
@@ -316,7 +316,7 @@
                             </span>
                           </template>
                           <template v-else>
-                            <span class="text-3xl font-bold text-gray-900 drop-shadow-sm">
+                            <span class="text-3xl font-bold text-gray-900 dark:text-white drop-shadow-sm">
                               {{
                                 formatCurrency(
                                   getAssetProfitLoss(selectedHoldingForDetails).price,
@@ -382,10 +382,10 @@
 
                       <div class="flex gap-4">
                         <div
-                          class="bg-gray-50 rounded-xl px-4 py-2 border border-gray-100 text-center"
+                          class="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-2 border border-gray-100 dark:border-gray-700 text-center"
                         >
                           <div class="text-[10px] text-gray-400 font-bold mb-1">สูงสุดของวัน</div>
-                          <div class="font-bold text-sm text-black">
+                          <div class="font-bold text-sm text-black dark:text-white">
                             {{
                               formatCurrency(
                                 getAssetProfitLoss(selectedHoldingForDetails).quote?.dayHigh || 0,
@@ -395,10 +395,10 @@
                           </div>
                         </div>
                         <div
-                          class="bg-gray-50 rounded-xl px-4 py-2 border border-gray-100 text-center"
+                          class="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-2 border border-gray-100 dark:border-gray-700 text-center"
                         >
                           <div class="text-[10px] text-gray-400 font-bold mb-1">ต่ำสุดของวัน</div>
-                          <div class="font-bold text-sm text-black">
+                          <div class="font-bold text-sm text-black dark:text-white">
                             {{
                               formatCurrency(
                                 getAssetProfitLoss(selectedHoldingForDetails).quote?.dayLow || 0,
@@ -454,11 +454,11 @@
                   <div class="lg:col-span-5 flex flex-col gap-6">
                     <div class="grid grid-cols-2 gap-4 pt-10">
                       <div
-                        class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center group relative cursor-default"
+                        class="bg-white dark:bg-gray-800/50 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center group relative cursor-default"
                       >
                         <p class="text-sm text-gray-500 font-bold mb-1">จำนวนหุ้นที่ถืออยู่</p>
                         <p
-                          class="text-xl sm:text-2xl font-bold text-gray-900 truncate"
+                          class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate"
                           :title="
                             parseFloat(selectedHoldingForDetails.quantity).toLocaleString('en-US', {
                               maximumFractionDigits: 4
@@ -488,11 +488,11 @@
                       </div>
 
                       <div
-                        class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center group relative cursor-default"
+                        class="bg-white dark:bg-gray-800/50 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center group relative cursor-default"
                       >
                         <p class="text-sm text-gray-500 font-bold mb-1">ราคาปัจจุบัน</p>
                         <p
-                          class="text-xl sm:text-2xl font-bold text-gray-900 truncate"
+                          class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate"
                           :title="
                             formatCurrency(
                               toTHB(
@@ -532,7 +532,7 @@
                       </div>
 
                       <div
-                        class="col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center group relative cursor-default overflow-hidden sm:overflow-visible"
+                        class="col-span-2 bg-white dark:bg-gray-800/50 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center group relative cursor-default overflow-hidden sm:overflow-visible"
                       >
                         <p class="text-sm text-gray-500 font-bold mb-1">
                           % และ จำนวนเงินที่เปลี่ยนใน 1 วัน
@@ -624,7 +624,7 @@
 
                       <!-- Total Profit/Loss -->
                       <div
-                        class="col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center group relative cursor-default overflow-hidden sm:overflow-visible"
+                        class="col-span-2 bg-white dark:bg-gray-800/50 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center group relative cursor-default overflow-hidden sm:overflow-visible"
                       >
                         <p class="text-sm text-gray-500 font-bold mb-1">
                           มูลค่าปัจจุบันและ กำไรทั้งหมดของสินทรัพย์นี้
@@ -656,7 +656,7 @@
                             }}%
                           </div>
                           <div class="truncate flex-1 min-w-0 text-lg font-bold flex flex-wrap items-baseline gap-2">
-                            <span class="text-gray-900">
+                            <span class="text-gray-900 dark:text-white">
                               {{ formatCurrency(getAssetProfitLoss(selectedHoldingForDetails).currentValTHB, 'THB') }}
                             </span>
                             <span
@@ -698,11 +698,11 @@
                       </div>
 
                       <div
-                        class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center group relative cursor-default"
+                        class="bg-white dark:bg-gray-800/50 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center group relative cursor-default"
                       >
                         <p class="text-sm text-gray-500 font-bold mb-1">ต้นทุนต่อหุ้น</p>
                         <p
-                          class="text-xl sm:text-2xl font-bold text-gray-900 truncate"
+                          class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate"
                           :title="
                             formatCurrency(
                               toTHB(
@@ -742,11 +742,11 @@
                       </div>
 
                       <div
-                        class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center group relative cursor-default"
+                        class="bg-white dark:bg-gray-800/50 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center group relative cursor-default"
                       >
                         <p class="text-sm text-gray-500 font-bold mb-1">ต้นทุนรวม</p>
                         <p
-                          class="text-xl sm:text-2xl font-bold text-gray-900 truncate"
+                          class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate"
                           :title="
                             formatCurrency(
                               toTHB(
@@ -805,7 +805,7 @@
                       </div>
                       <div v-if="portfolioId !== 'all'">
                         <button
-                          class="w-full bg-white hover:bg-red-50 text-red-600 py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-red-200 hover:border-red-300"
+                          class="w-full bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-red-200 dark:border-red-800/50 hover:border-red-300 dark:hover:border-red-700/50"
                           @click="handleDeleteFromDetails"
                         >
                           <i class="pi pi-trash" /> ลบสินทรัพย์นี้

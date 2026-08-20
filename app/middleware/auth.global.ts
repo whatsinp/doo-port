@@ -14,13 +14,23 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     })
   })
 
-  const publicRoutes = ['/login', '/register', '/auth', '/forgot-password', '/reset-password', '/']
+  const publicRoutes = ['/login', '/register', '/auth', '/forgot-password', '/reset-password', '/', '/verify-email']
 
   if (!user && !publicRoutes.includes(to.path)) {
     return navigateTo('/auth?mode=login')
   }
 
-  if (user && (to.path === '/login' || to.path === '/register' || to.path === '/auth')) {
-    return navigateTo('/dashboard')
+  if (user) {
+    const isUnverified = !(user as any).emailVerified
+
+    // If unverified and trying to access a protected route, send to verify-email
+    if (isUnverified && !publicRoutes.includes(to.path)) {
+      return navigateTo('/verify-email')
+    }
+
+    // If verified and trying to access login/register/verify-email, send to dashboard
+    if (!isUnverified && (to.path === '/login' || to.path === '/register' || to.path === '/auth' || to.path === '/verify-email')) {
+      return navigateTo('/dashboard')
+    }
   }
 })
